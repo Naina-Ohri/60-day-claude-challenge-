@@ -52,4 +52,11 @@ The roadmap highlighted the importance of balancing DSA preparation, project bui
 * Roadmap Screenshots
 * Capsule Hub Exploration
 
+## Capsule Hub Observations
+
+- Installed and explored the Capsule Hub extension.
+- Learned that it helps organize prompts and reusable instructions.
+- Useful for managing AI workflows and keeping important prompts in one place.
+- Can save time when working on repeated tasks.
+
 #60DayClaudeChallenge

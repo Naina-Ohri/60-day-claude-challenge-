@@ -180,13 +180,25 @@ Tracked:
 
 # Enhanced Version Screenshots
 
-## Enhanced Dashboard
+## Dashboard
 
 ![Enhanced Dashboard](screenshots/enhanced-dashboard.png)
 
-## CSV Upload Feature
+## My Profile
 
-![CSV Upload](screenshots/enhanced-csv.png)
+![Enhanced Profile](screenshots/enhanced-profile.png)
+
+## Food Log & CSV Upload
+
+![Enhanced Food Log](screenshots/enhanced-foodlog-csv.png)
+
+## Nutrients
+
+![Enhanced Nutrients](screenshots/enhanced-nutrients.png)
+
+## Recommendations
+
+![Enhanced Recommendations](screenshots/enhanced-recommendations.png)
 
 ## Meal Planner
 
@@ -194,28 +206,31 @@ Tracked:
 
 ## Risk Analysis
 
-![Risk Analysis](screenshots/enhanced-risk.png)
+![Risk Analysis](screenshots/enhanced-risk-analysis.png)
 
-## Advanced Recommendations
+## Info & Sources
 
-![Advanced Recommendations](screenshots/enhanced-recommendations.png)
+![Info & Sources](screenshots/enhanced-info-sources.png)
 
 ---
 
 # MVP vs Enhanced Version
 
-| Feature                   | MVP Version | Enhanced Version |
-| ------------------------- | ----------- | ---------------- |
-| Food Database             | 20 Foods    | 60+ Foods        |
-| CSV Upload                | ❌           | ✅                |
-| Meal Planner              | ❌           | ✅                |
-| Risk Analysis             | ❌           | ✅                |
-| Additional Micronutrients | ❌           | ✅                |
-| Educational Disclaimer    | ❌           | ✅                |
-| Nutrition Sources         | ❌           | ✅                |
-| Charts                    | Basic       | Advanced         |
-| Recommendations           | Basic       | Advanced         |
-| Analytics                 | Standard    | Enhanced         |
+| Feature                   | MVP Version | Enhanced Version      |
+| ------------------------- | ----------- | --------------------- |
+| Food Database             | 20 Foods    | 60+ Foods             |
+| CSV Upload                | ❌           | ✅                     |
+| Meal Planner              | ❌           | ✅                     |
+| Risk Analysis             | ❌           | ✅                     |
+| Additional Micronutrients | ❌           | ✅                     |
+| Educational Disclaimer    | ❌           | ✅                     |
+| Nutrition Sources         | ❌           | ✅                     |
+| Charts                    | Basic       | Advanced              |
+| Recommendations           | Basic       | Advanced              |
+| Analytics                 | Standard    | Enhanced              |
+| Food Log                  | Basic       | Enhanced + CSV Upload |
+| Nutrient Analysis         | Standard    | Expanded              |
+| Info & Sources            | ❌           | ✅                     |
 
 ---
 
@@ -226,7 +241,7 @@ Tracked:
 * nutriscope-mvp.html
 * nutriscope-enhanced.html
 
-## Screenshots
+## Screenshots Folder Structure
 
 ### MVP
 
@@ -239,10 +254,13 @@ Tracked:
 ### Enhanced
 
 * screenshots/enhanced-dashboard.png
-* screenshots/enhanced-csv.png
-* screenshots/enhanced-mealplanner.png
-* screenshots/enhanced-risk.png
+* screenshots/enhanced-profile.png
+* screenshots/enhanced-foodlog-csv.png
+* screenshots/enhanced-nutrients.png
 * screenshots/enhanced-recommendations.png
+* screenshots/enhanced-mealplanner.png
+* screenshots/enhanced-risk-analysis.png
+* screenshots/enhanced-info-sources.png
 
 ---
 
@@ -287,3 +305,4 @@ This project demonstrated the value of iterative AI application development. Sta
 The experience highlighted how Claude Artifacts can be used as a practical tool for building interactive applications, validating ideas, and accelerating product development workflows.
 
 #60DayClaudeChallenge
+

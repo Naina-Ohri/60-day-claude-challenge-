@@ -110,23 +110,23 @@ Tracked:
 
 ## Dashboard
 
-![Dashboard](mvp-dashboard.png)
+![Dashboard](screenshots/mvp-dashboard.png)
 
 ## Profile Page
 
-![Profile](mvp-profile.png)
+![Profile](screenshots/mvp-profile.png)
 
 ## Food Log
 
-![Food Log](mvp-foodlog.png)
+![Food Log](screenshots/mvp-foodlog.png)
 
 ## Nutrient Analysis
 
-![Nutrients](mvp-nutrients.png)
+![Nutrients](screenshots/mvp-nutrients.png)
 
 ## Recommendations
 
-![Recommendations](mvp-recommendations.png)
+![Recommendations](screenshots/mvp-recommendations.png)
 
 ---
 
@@ -182,23 +182,23 @@ Tracked:
 
 ## Enhanced Dashboard
 
-![Enhanced Dashboard](enhanced-dashboard.png)
+![Enhanced Dashboard](screenshots/enhanced-dashboard.png)
 
 ## CSV Upload Feature
 
-![CSV Upload](enhanced-csv.png)
+![CSV Upload](screenshots/enhanced-csv.png)
 
 ## Meal Planner
 
-![Meal Planner](enhanced-mealplanner.png)
+![Meal Planner](screenshots/enhanced-mealplanner.png)
 
 ## Risk Analysis
 
-![Risk Analysis](enhanced-risk.png)
+![Risk Analysis](screenshots/enhanced-risk.png)
 
 ## Advanced Recommendations
 
-![Advanced Recommendations](enhanced-recommendations.png)
+![Advanced Recommendations](screenshots/enhanced-recommendations.png)
 
 ---
 
@@ -230,19 +230,19 @@ Tracked:
 
 ### MVP
 
-* mvp-dashboard.png
-* mvp-profile.png
-* mvp-foodlog.png
-* mvp-nutrients.png
-* mvp-recommendations.png
+* screenshots/mvp-dashboard.png
+* screenshots/mvp-profile.png
+* screenshots/mvp-foodlog.png
+* screenshots/mvp-nutrients.png
+* screenshots/mvp-recommendations.png
 
 ### Enhanced
 
-* enhanced-dashboard.png
-* enhanced-csv.png
-* enhanced-mealplanner.png
-* enhanced-risk.png
-* enhanced-recommendations.png
+* screenshots/enhanced-dashboard.png
+* screenshots/enhanced-csv.png
+* screenshots/enhanced-mealplanner.png
+* screenshots/enhanced-risk.png
+* screenshots/enhanced-recommendations.png
 
 ---
 

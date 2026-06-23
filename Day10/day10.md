@@ -34,7 +34,7 @@ The design includes dark/light mode support, responsive layouts, animations, and
 * Call-to-action buttons
 * Modern landing page design
 
-### Typing Animation
+## Typing Animation
 
 The portfolio dynamically cycles through multiple roles such as:
 
@@ -45,8 +45,6 @@ The portfolio dynamically cycles through multiple roles such as:
 
 This makes the portfolio feel more dynamic and engaging compared to displaying a single static title.
 
----
-
 ## About Me
 
 Includes:
@@ -55,8 +53,6 @@ Includes:
 * Educational background
 * Career aspirations
 * Professional interests
-
----
 
 ## Skills & Technologies
 
@@ -84,8 +80,6 @@ Includes:
 * Problem Solving
 * Teamwork
 
----
-
 ## Projects Section
 
 Showcases personal projects using modern project cards.
@@ -97,8 +91,6 @@ Each card contains:
 * Technology stack
 * Professional presentation layout
 
----
-
 ## Achievements & Certifications
 
 Highlights:
@@ -108,8 +100,6 @@ Highlights:
 * Technical learning milestones
 * Professional accomplishments
 
----
-
 ## Contact Section
 
 Includes:
@@ -118,8 +108,6 @@ Includes:
 * LinkedIn
 * GitHub
 * Contact form
-
----
 
 ## Additional Features
 
@@ -139,33 +127,33 @@ Includes:
 
 ## Dark Mode
 
-### Hero Section – Role 1
+### Homepage – Role 1
 
-![Hero Section Role 1](screenshots/dark-hero-role1.png)
+![Homepage Role 1](screenshots/darkmode-homepage-role1.jpeg)
 
-### Hero Section – Role 2
+### Homepage – Role 2
 
-![Hero Section Role 2](screenshots/dark-hero-role2.png)
+![Homepage Role 2](screenshots/darkmode-homepage-role2.jpeg)
 
 ### About Me Section
 
-![About Me](screenshots/dark-about.png)
+![About Me](screenshots/darkmode-about.jpeg)
 
 ### Skills & Technologies
 
-![Skills](screenshots/dark-skills.png)
+![Skills](screenshots/darkmode-skills.jpeg)
 
 ### Projects Section
 
-![Projects](screenshots/dark-projects.png)
+![Projects](screenshots/darkmode-projects.jpeg)
 
 ### Achievements Section
 
-![Achievements](screenshots/dark-achievements.png)
+![Achievements](screenshots/darkmode-achievements.jpeg)
 
 ### Contact Section
 
-![Contact](screenshots/dark-contact.png)
+![Contact](screenshots/darkmode-contact.jpeg)
 
 ---
 
@@ -173,15 +161,15 @@ Includes:
 
 ### Light Mode Overview 1
 
-![Light Mode 1](screenshots/light-mode-1.png)
+![Light Mode 1](screenshots/light-mode-1.jpeg)
 
 ### Light Mode Overview 2
 
-![Light Mode 2](screenshots/light-mode-2.png)
+![Light Mode 2](screenshots/light-mode-2.jpeg)
 
 ### Light Mode Overview 3
 
-![Light Mode 3](screenshots/light-mode-3.png)
+![Light Mode 3](screenshots/light-mode-3.jpeg)
 
 ---
 
@@ -195,23 +183,21 @@ Includes:
 
 ### Dark Mode Screenshots
 
-* screenshots/dark-hero-role1.png
-* screenshots/dark-hero-role2.png
-* screenshots/dark-about.png
-* screenshots/dark-skills.png
-* screenshots/dark-projects.png
-* screenshots/dark-achievements.png
-* screenshots/dark-contact.png
+* screenshots/darkmode-homepage-role1.jpeg
+* screenshots/darkmode-homepage-role2.jpeg
+* screenshots/darkmode-about.jpeg
+* screenshots/darkmode-skills.jpeg
+* screenshots/darkmode-projects.jpeg
+* screenshots/darkmode-achievements.jpeg
+* screenshots/darkmode-contact.jpeg
 
 ### Light Mode Screenshots
 
-* screenshots/light-mode-1.png
-* screenshots/light-mode-2.png
-* screenshots/light-mode-3.png
+* screenshots/light-mode-1.jpeg
+* screenshots/light-mode-2.jpeg
+* screenshots/light-mode-3.jpeg
 
----
-
-# Live Portfolio URL
+## Live Portfolio URL
 
 Not deployed (optional)
 
@@ -223,25 +209,17 @@ Not deployed (optional)
 
 A portfolio is more than a collection of projects. It acts as a professional identity and creates a strong first impression for recruiters and employers.
 
----
-
 ## 2. AI Can Accelerate Web Development
 
 Claude was able to generate a complete portfolio website including layout, styling, animations, responsiveness, and interactive features in a single prompt.
-
----
 
 ## 3. Dynamic Content Improves User Experience
 
 Using a typing animation that cycles through multiple roles makes the portfolio more engaging and visually appealing than displaying one static title.
 
----
-
 ## 4. Responsive Design Is Essential
 
 A portfolio should work seamlessly across desktop, tablet, and mobile devices to ensure accessibility for all visitors.
-
----
 
 ## 5. Professional Presentation Increases Credibility
 
@@ -258,3 +236,4 @@ The generated portfolio successfully showcases skills, projects, achievements, a
 The experience highlighted the importance of personal branding and how AI tools like Claude can accelerate the creation of professional online portfolios.
 
 #60DayClaudeChallenge
+

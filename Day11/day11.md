@@ -113,19 +113,15 @@ The final resume was saved as a PDF document for future internship applications.
 
 # Files Included
 
-## Resume File
+## Resume Files
 
+* original-resume.pdf
 * optimized-resume.pdf
 
 ## Screenshot
 
 * ats-analysis.png
 
----
-
-# ATS Analysis Screenshot
-
-![ATS Analysis](ats-analysis.png)
 
 ---
 

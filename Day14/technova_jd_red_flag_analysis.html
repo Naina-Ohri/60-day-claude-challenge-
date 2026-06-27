@@ -1,0 +1,139 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .wrap { padding: 1.5rem 0; }
+  .score-hero { text-align: center; margin-bottom: 2rem; }
+  .score-ring { display: inline-flex; align-items: center; justify-content: center; width: 120px; height: 120px; border-radius: 50%; border: 6px solid #1baf7a; background: var(--bg-success, #eaf3de); }
+  .score-num { font-size: 48px; font-weight: 500; color: #0f6e56; line-height: 1; }
+  .score-label { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+  .verdict-banner { display: flex; align-items: center; gap: 10px; background: var(--bg-warning, #faeeda); border: 0.5px solid #eda100; border-radius: var(--radius); padding: 12px 16px; margin-bottom: 1.5rem; }
+  .verdict-icon { font-size: 22px; }
+  .verdict-text { font-size: 15px; font-weight: 500; color: #633806; }
+  .verdict-sub { font-size: 13px; color: #854f0b; margin-top: 2px; }
+  .section-title { font-size: 15px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
+  .section { margin-bottom: 1.75rem; }
+  .flag-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .flag-item:last-child { border-bottom: none; }
+  .sev-badge { flex-shrink: 0; min-width: 36px; height: 22px; border-radius: 99px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; }
+  .sev-low { background: #eaf3de; color: #27500a; }
+  .sev-mid { background: #faeeda; color: #633806; }
+  .sev-high { background: #fcebeb; color: #501313; }
+  .flag-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .flag-desc { font-size: 13px; color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
+  .pos-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .pos-item:last-child { border-bottom: none; }
+  .pos-icon { color: #1baf7a; font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .pos-text { font-size: 14px; color: var(--text-primary); line-height: 1.5; }
+  .risk-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .risk-table th { text-align: left; font-weight: 500; font-size: 12px; color: var(--text-secondary); padding: 8px 12px; border-bottom: 0.5px solid var(--border); }
+  .risk-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); color: var(--text-primary); }
+  .risk-table tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+  .pill-low { background: #eaf3de; color: #27500a; }
+  .pill-medium { background: #faeeda; color: #633806; }
+  .pill-high { background: #fcebeb; color: #501313; }
+  .pill-vlow { background: #e1f5ee; color: #085041; }
+  .q-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .q-item:last-child { border-bottom: none; }
+  .q-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-1); border: 0.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-top: 1px; }
+  .q-text { font-size: 14px; color: var(--text-primary); line-height: 1.6; }
+  .bar-wrap { margin-bottom: 1.5rem; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar-label { font-size: 13px; color: var(--text-secondary); width: 100px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--surface-1); border-radius: 99px; overflow: hidden; border: 0.5px solid var(--border); }
+  .bar-fill { height: 100%; border-radius: 99px; }
+  .bar-val { font-size: 13px; font-weight: 500; color: var(--text-primary); width: 30px; text-align: right; flex-shrink: 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 500px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <h2 class="sr-only">AI Red Flag Detector analysis for TechNova Solutions Software Development Intern role</h2>
+
+  <div class="score-hero">
+    <div class="score-ring">
+      <span class="score-num">22</span>
+    </div>
+    <div class="score-label">Overall Risk Score (0–100)</div>
+    <div style="font-size:13px; color: var(--text-secondary); margin-top:4px;">Low Risk · Mostly safe to apply</div>
+  </div>
+
+  <div class="verdict-banner">
+    <span class="verdict-icon">⚠️</span>
+    <div>
+      <div class="verdict-text">Apply with Caution — But Leaning Positive</div>
+      <div class="verdict-sub">Strong JD overall; a few minor gaps worth clarifying at interview stage</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Risk breakdown</div>
+    <div class="bar-wrap">
+      <div class="bar-row"><span class="bar-label">Requirements</span><div class="bar-track"><div class="bar-fill" style="width:15%; background:#1baf7a;"></div></div><span class="bar-val">15</span></div>
+      <div class="bar-row"><span class="bar-label">Culture</span><div class="bar-track"><div class="bar-fill" style="width:20%; background:#eda100;"></div></div><span class="bar-val">20</span></div>
+      <div class="bar-row"><span class="bar-label">Remote/Hybrid</span><div class="bar-track"><div class="bar-fill" style="width:25%; background:#eda100;"></div></div><span class="bar-val">25</span></div>
+      <div class="bar-row"><span class="bar-label">Hiring</span><div class="bar-track"><div class="bar-fill" style="width:30%; background:#eda100;"></div></div><span class="bar-val">30</span></div>
+      <div class="bar-row"><span class="bar-label">Company</span><div class="bar-track"><div class="bar-fill" style="width:20%; background:#1baf7a;"></div></div><span class="bar-val">20</span></div>
+    </div>
+
+    <table class="risk-table">
+      <thead><tr><th>Category</th><th>Risk level</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Requirements</td><td><span class="pill pill-vlow">Very low</span></td><td style="font-size:13px; color:var(--text-secondary);">Appropriate for intern level</td></tr>
+        <tr><td>Culture</td><td><span class="pill pill-low">Low</span></td><td style="font-size:13px; color:var(--text-secondary);">No hustle culture language</td></tr>
+        <tr><td>Remote/Hybrid</td><td><span class="pill pill-medium">Moderate</span></td><td style="font-size:13px; color:var(--text-secondary);">Hybrid terms undefined</td></tr>
+        <tr><td>Hiring</td><td><span class="pill pill-medium">Moderate</span></td><td style="font-size:13px; color:var(--text-secondary);">No hiring process details</td></tr>
+        <tr><td>Company</td><td><span class="pill pill-low">Low</span></td><td style="font-size:13px; color:var(--text-secondary);">Young but growing company</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two-col">
+    <div class="section">
+      <div class="section-title">Red flags</div>
+      <div class="flag-item">
+        <span class="sev-badge sev-mid">3/10</span>
+        <div><div class="flag-title">Hybrid terms undefined</div><div class="flag-desc">No specifics on office days per week — could mean 4 days/week in-office or 1.</div></div>
+      </div>
+      <div class="flag-item">
+        <span class="sev-badge sev-mid">3/10</span>
+        <div><div class="flag-title">PPO criteria vague</div><div class="flag-desc">"High performers" get a PPO — no clarity on what metrics or thresholds define this.</div></div>
+      </div>
+      <div class="flag-item">
+        <span class="sev-badge sev-low">2/10</span>
+        <div><div class="flag-title">No hiring process details</div><div class="flag-desc">Rounds, timeline, and interview format are not mentioned — could be a long process.</div></div>
+      </div>
+      <div class="flag-item">
+        <span class="sev-badge sev-low">2/10</span>
+        <div><div class="flag-title">CGPA cutoff is "preferred"</div><div class="flag-desc">7.5+ is listed as preferred, not required — ambiguous screening criteria.</div></div>
+      </div>
+      <div class="flag-item">
+        <span class="sev-badge sev-low">2/10</span>
+        <div><div class="flag-title">Mid-size company risk</div><div class="flag-desc">250–500 employees, founded 2018 — less established than larger firms; verify stability.</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Positive signals</div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Transparent stipend of ₹25,000/month — above average for intern roles</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">No "rockstar" or hustle culture language anywhere</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Requirements are realistic and appropriate for a B.Tech intern</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Explicit PPO opportunity — company invests in intern-to-hire pipeline</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Learning budget mentioned — signals investment in employee growth</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Structured agile workflow (stand-ups, sprints) — good real-world exposure</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Modern tech stack (React, Node, MongoDB, REST) — placement-relevant skills</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Mentorship from senior engineers explicitly promised</span></div>
+      <div class="pos-item"><i class="ti ti-circle-check pos-icon" aria-hidden="true"></i><span class="pos-text">Multi-sector SaaS experience (healthcare, finance, education)</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">5 smart interview questions</div>
+    <div class="q-item"><span class="q-num">1</span><span class="q-text">Can you clarify the hybrid arrangement — how many days per week are expected in the Bengaluru office, and is this flexible?</span></div>
+    <div class="q-item"><span class="q-num">2</span><span class="q-text">How is PPO performance evaluated — are there specific metrics, a review timeline, or a mid-internship feedback session to help me stay on track?</span></div>
+    <div class="q-item"><span class="q-num">3</span><span class="q-text">What does a typical week look like for an intern on your engineering team — what percentage of time is independent work vs. paired with a mentor?</span></div>
+    <div class="q-item"><span class="q-num">4</span><span class="q-text">What is the interview and selection process from here — how many rounds, what format, and what is the expected timeline to an offer?</span></div>
+    <div class="q-item"><span class="q-num">5</span><span class="q-text">How many interns from previous batches received PPOs, and what did those interns go on to work on as full-time employees?</span></div>
+  </div>
+</div>

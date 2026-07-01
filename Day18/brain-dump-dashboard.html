@@ -1,0 +1,272 @@
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card-bg: #ffffff;
+    --border: #eaecef;
+    --text: #1f2430;
+    --text-muted: #6b7280;
+    --accent: #5b5fef;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(20,20,43,0.06), 0 8px 24px rgba(20,20,43,0.04);
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    margin: 0;
+    padding: 32px 16px 80px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  header.top {
+    margin-bottom: 28px;
+  }
+  header.top h1 {
+    font-size: 26px;
+    margin: 0 0 6px;
+  }
+  header.top .meta {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  section.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  section.card > summary, section.card > h2 {
+    font-size: 16px;
+    font-weight: 650;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  section.card > summary::-webkit-details-marker { display: none; }
+  section.card > summary::after {
+    content: "›";
+    margin-left: auto;
+    transform: rotate(90deg);
+    transition: transform 0.15s ease;
+    color: var(--text-muted);
+    font-size: 18px;
+  }
+  details[open] > summary::after { transform: rotate(270deg); }
+  .body-content { margin-top: 14px; }
+  .summary-text { font-size: 15px; color: var(--text); }
+
+  .takeaway-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .takeaway-card {
+    background: #fafaff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .table-scroll { overflow-x: auto; }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  th { color: var(--text-muted); font-weight: 600; font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-pending { background: #fff4e5; color: #b45309; }
+  .badge-completed { background: #e6f9ee; color: #1a7f4f; }
+  .badge-high { background: #fde8e8; color: #c0392b; }
+  .badge-conflict { background: #fff0f0; color: #c0392b; }
+  .badge-question { background: #eef1ff; color: #4548c9; }
+
+  ul.plain-list { margin: 0; padding-left: 20px; }
+  ul.plain-list li { margin-bottom: 6px; font-size: 14px; }
+
+  .speaker-block {
+    border-left: 3px solid var(--accent);
+    padding: 4px 0 4px 12px;
+    margin-bottom: 12px;
+  }
+  .speaker-name { font-weight: 650; font-size: 14px; }
+  .speaker-role { color: var(--text-muted); font-size: 12px; margin-left: 6px; }
+  .speaker-text { font-size: 14px; margin-top: 2px; }
+
+  .empty-note {
+    color: var(--text-muted);
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  @media (max-width: 480px) {
+    section.card { padding: 16px; }
+    header.top h1 { font-size: 22px; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>College Event Management Portal — Meeting Dashboard</h1>
+    <div class="meta">Date: 29 June 2026 &nbsp;•&nbsp; Attendees: Sarah (Project Lead), Alex (Frontend), Mia (Backend), Ethan (UI/UX), Olivia (Testing)</div>
+  </header>
+
+  <!-- 1. Summary -->
+  <details class="card" open>
+    <summary>📋 Summary</summary>
+    <div class="body-content summary-text">
+      The team is working toward an MVP deadline of July 15, with authentication and dashboard marked as highest priority. Alex has finished the homepage and is 80% done with the login page; dashboard UI has not started and is waiting on Ethan's UI kit. Mia completed the authentication API and finalized the database schema, but payment integration is blocked on gateway selection. Olivia has written authentication test cases but the testing environment itself is not yet ready and performance testing is pending. Key decisions: the MVP deadline stays at July 15, authentication is completed first, dashboard work begins after the UI kit is delivered, and the payment gateway decision is postponed to the next meeting.
+    </div>
+  </details>
+
+  <!-- Speaker Summary (Transcript Mode) -->
+  <details class="card" open>
+    <summary>🗣️ Speaker Summary</summary>
+    <div class="body-content">
+      <div class="speaker-block">
+        <span class="speaker-name">Sarah</span><span class="speaker-role">Project Lead</span>
+        <div class="speaker-text">Set the MVP deadline (July 15) and flagged authentication and dashboard as highest priority.</div>
+      </div>
+      <div class="speaker-block">
+        <span class="speaker-name">Alex</span><span class="speaker-role">Frontend</span>
+        <div class="speaker-text">Reported homepage complete, login page 80% complete, dashboard UI not started; needs icons and final color palette from Ethan.</div>
+      </div>
+      <div class="speaker-block">
+        <span class="speaker-name">Ethan</span><span class="speaker-role">UI/UX</span>
+        <div class="speaker-text">Confirmed the final UI kit will be shared by July 2, dark mode is completed, and mobile responsiveness still needs work.</div>
+      </div>
+      <div class="speaker-block">
+        <span class="speaker-name">Mia</span><span class="speaker-role">Backend</span>
+        <div class="speaker-text">Reported authentication API complete and database schema finalized; payment integration not started, pending payment gateway selection.</div>
+      </div>
+      <div class="speaker-block">
+        <span class="speaker-name">Olivia</span><span class="speaker-role">Testing</span>
+        <div class="speaker-text">Reported testing environment not ready, authentication test cases written, and performance testing still pending.</div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. Key Takeaways -->
+  <details class="card" open>
+    <summary>✨ Key Takeaways</summary>
+    <div class="body-content takeaway-grid">
+      <div class="takeaway-card">MVP deadline remains <strong>July 15</strong>.</div>
+      <div class="takeaway-card">Authentication must be completed first.</div>
+      <div class="takeaway-card">Dashboard UI begins only after Ethan's UI kit is delivered.</div>
+      <div class="takeaway-card">Payment gateway decision postponed until the next meeting.</div>
+      <div class="takeaway-card">Authentication API and database schema are already complete (Mia).</div>
+      <div class="takeaway-card">Dark mode is completed, but mobile responsiveness still needs work (Ethan).</div>
+    </div>
+  </details>
+
+  <!-- Decisions by Speaker -->
+  <details class="card" open>
+    <summary>✅ Decisions</summary>
+    <div class="body-content">
+      <ul class="plain-list">
+        <li>MVP deadline remains July 15. <span class="speaker-role">(decided by team / stated by Sarah)</span></li>
+        <li>Authentication must be completed first. <span class="speaker-role">(stated by Sarah)</span></li>
+        <li>Dashboard UI begins after UI kit delivery. <span class="speaker-role">(team decision, tied to Ethan's & Alex's updates)</span></li>
+        <li>Payment gateway decision postponed until next meeting. <span class="speaker-role">(tied to Mia's update / Sarah's action item)</span></li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- 3. Action Items -->
+  <details class="card" open>
+    <summary>🧩 Action Items</summary>
+    <div class="body-content table-scroll">
+      <table>
+        <thead>
+          <tr><th>Task</th><th>Owner</th><th>Deadline</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Finish Login Page</td><td>Alex</td><td>July 4</td><td><span class="badge badge-pending">⏳ Pending</span></td></tr>
+          <tr><td>Deliver UI Kit</td><td>Ethan</td><td>July 2</td><td><span class="badge badge-pending">⏳ Pending</span></td></tr>
+          <tr><td>Prepare Dashboard APIs</td><td>Mia</td><td>July 6</td><td><span class="badge badge-pending">⏳ Pending</span></td></tr>
+          <tr><td>Configure Testing Environment</td><td>Olivia</td><td>July 5</td><td><span class="badge badge-pending">⏳ Pending</span></td></tr>
+          <tr><td>Finalize Payment Gateway</td><td>Sarah</td><td>July 8</td><td><span class="badge badge-pending">⏳ Pending</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- Action Items by Speaker -->
+  <details class="card">
+    <summary>👤 Action Items by Speaker</summary>
+    <div class="body-content">
+      <ul class="plain-list">
+        <li><strong>Alex:</strong> Finish Login Page — Deadline July 4 — ⏳ Pending</li>
+        <li><strong>Ethan:</strong> Deliver UI Kit — Deadline July 2 — ⏳ Pending</li>
+        <li><strong>Mia:</strong> Prepare Dashboard APIs — Deadline July 6 — ⏳ Pending</li>
+        <li><strong>Olivia:</strong> Configure Testing Environment — Deadline July 5 — ⏳ Pending</li>
+        <li><strong>Sarah:</strong> Finalize Payment Gateway — Deadline July 8 — ⏳ Pending</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- 4. Open Questions -->
+  <details class="card" open>
+    <summary>❓ Open Questions</summary>
+    <div class="body-content">
+      <ul class="plain-list">
+        <li><span class="badge badge-question">❓</span> Which payment gateway will be selected?</li>
+        <li><span class="badge badge-question">❓</span> Should dark mode be enabled in MVP?</li>
+        <li><span class="badge badge-question">❓</span> Will notifications be included in Phase 1?</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- 5. Risks / Blockers -->
+  <details class="card" open>
+    <summary>⚠️ Risks / Blockers</summary>
+    <div class="body-content">
+      <ul class="plain-list">
+        <li>Delay in UI kit may delay dashboard development.</li>
+        <li>Payment gateway not finalized.</li>
+        <li>Testing cannot begin until environment setup is complete.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- 6. Conflicts -->
+  <details class="card">
+    <summary>⚠️ Conflicts</summary>
+    <div class="body-content">
+      <p class="empty-note">None found in the notes.</p>
+    </div>
+  </details>
+
+  <!-- 7. Additional Notes -->
+  <details class="card">
+    <summary>🗒️ Additional Notes</summary>
+    <div class="body-content">
+      <ul class="plain-list">
+        <li>Alex needs icons and the final color palette from Ethan before dashboard UI work can begin.</li>
+        <li>Ethan noted mobile responsiveness still needs work, separate from the completed dark mode feature.</li>
+      </ul>
+    </div>
+  </details>
+</div>

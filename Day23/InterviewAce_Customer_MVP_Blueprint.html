@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>InterviewAce AI — Customer & MVP Blueprint</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; color:#1a1f2b; font-size:13px; line-height:1.5; margin:0;}
+  .cover { background:linear-gradient(135deg,#0b1f3a,#1c5aa8); color:#fff; padding:50px 45px; border-radius:10px; margin-bottom:30px;}
+  .cover .tag{display:inline-block;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:16px;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
+  .cover h1{font-size:34px;margin:0 0 6px;font-weight:800;}
+  .cover h2{font-size:15px;font-weight:400;color:#cfe0f7;margin:0 0 24px;}
+  h1.section{font-size:20px;color:#0b1f3a;border-bottom:3px solid #1c5aa8;padding-bottom:6px;margin-top:34px;}
+  h3{color:#12345c;font-size:14px;margin-top:16px;}
+  table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:12px;}
+  th{background:#0b1f3a;color:#fff;text-align:left;padding:8px 9px;font-size:11.5px;}
+  td{padding:7px 9px;border-bottom:1px solid #e2e6ec;}
+  tr:nth-child(even) td{background:#f5f8fc;}
+  .callout{background:#f0f6ff;border-left:4px solid #1c5aa8;padding:10px 14px;border-radius:4px;margin:12px 0;}
+  .callout .lbl{font-weight:700;font-size:11px;text-transform:uppercase;display:block;margin-bottom:4px;color:#1c5aa8;}
+  .verdict{background:linear-gradient(135deg,#0b1f3a,#e0972d22);border-left:6px solid #e0972d;padding:18px 22px;border-radius:8px;margin:16px 0;}
+  .verdict h2{margin:0 0 8px;font-size:19px;color:#8a5a10;}
+  .score-grid{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;}
+  .score-card{flex:1;min-width:120px;background:#fff;border:1px solid #dfe4ec;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .score-card .num{font-size:24px;font-weight:800;color:#1c5aa8;}
+  .score-card .lbl{font-size:10.5px;color:#5a6478;margin-top:3px;}
+  ul.clean{margin:6px 0;padding-left:18px;}
+  ul.clean li{margin-bottom:5px;}
+  .funnel{background:#0b1f3a;color:#fff;padding:9px 16px;margin:5px auto;border-radius:6px;text-align:center;font-weight:600;font-size:12.5px;}
+  .footer{font-size:10.5px;color:#8a93a3;text-align:center;margin-top:30px;border-top:1px solid #e2e6ec;padding-top:10px;}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <span class="tag">Confidential · Product & Customer Research Memo</span>
+  <h1>Customer &amp; MVP Blueprint</h1>
+  <h2>InterviewAce AI — AI-Powered Placement &amp; Interview Preparation Platform</h2>
+</div>
+
+<table>
+<tr><th>Startup Idea</th><th>Problem Solved</th></tr>
+<tr><td>InterviewAce AI — unified AI platform for aptitude, coding, mock interviews, resume/ATS, and personalized placement roadmaps.</td>
+<td>Engineering students rely on 4–6 disconnected tools with no personalization, structured roadmap, or progress tracking.</td></tr>
+</table>
+<table>
+<tr><th>Target Customers</th><th>Key Competitors</th></tr>
+<tr><td>Engineering students, fresh graduates &amp; early-career job seekers preparing for internships/placements in India.</td>
+<td>PrepInsta, LeetCode/HackerRank, GeeksforGeeks, Unstop, Interview Kickstart.</td></tr>
+</table>
+
+<h1 class="section">Executive Summary</h1>
+<p>This blueprint translates the InterviewAce AI Startup Validation Report into an actionable customer and MVP roadmap. The placement-prep problem is real and independently corroborated — no incumbent owns the full student journey with AI personalization. However, with zero MVP, users, or funding to date, the priority is not breadth but proof: build one sharp module, validate it with real students, and let usage data decide the next scope.</p>
+<div class="callout"><span class="lbl">Verdict Preview</span>Promising, well-timed problem with a genuine AI-personalization wedge, but currently unvalidated at the product level. Recommended path: narrow MVP → 100 real users → data-backed iteration.</div>
+
+<h1 class="section">Ideal Customer Profile (ICP)</h1>
+<table>
+<tr><th>Attribute</th><th>Profile</th></tr>
+<tr><td>Education stage</td><td>3rd/4th-year B.Tech/B.E. (CS, IT, ECE-adjacent), BCA/MCA</td></tr>
+<tr><td>Institution tier</td><td>Tier-2/Tier-3 colleges (highest pain); Tier-1 secondary</td></tr>
+<tr><td>Geography</td><td>India — UP, Maharashtra, Tamil Nadu, Karnataka, Telangana, Delhi-NCR</td></tr>
+<tr><td>Behavior</td><td>WhatsApp/Telegram groups, YouTube, Unstop, LinkedIn; price-sensitive, mobile-first</td></tr>
+<tr><td>Trigger moment</td><td>6–9 months before placement season</td></tr>
+</table>
+
+<h1 class="section">Buyer Persona</h1>
+<div class="callout"><span class="lbl">"Rahul, the Anxious Fresher" — 21, final-year B.Tech IT, Tier-2 (UP)</span>Juggles PrepInsta, YouTube, a free ATS checker. Overwhelmed by tab-switching; wants one place with a clear weekly plan.</div>
+<div class="callout"><span class="lbl">"Ananya, the Ambitious Upskiller" — 22, final-year CSE, targeting SDE roles</span>Grinds LeetCode daily but frustrated no tool links coding prep to resume + behavioral prep. Will pay for real personalization.</div>
+
+<h1 class="section">Top 10 Customer Pain Points</h1>
+<table>
+<tr><th>#</th><th>Pain Point</th><th>Severity</th></tr>
+<tr><td>1</td><td>Switching between 4–6 platforms, no unified progress view</td><td>High</td></tr>
+<tr><td>2</td><td>No personalized "what to study next"</td><td>High</td></tr>
+<tr><td>3</td><td>No realistic mock interviews with structured feedback</td><td>High</td></tr>
+<tr><td>4</td><td>Resume/ATS feedback generic or paywalled elsewhere</td><td>Medium</td></tr>
+<tr><td>5</td><td>No benchmark of interview readiness — high anxiety</td><td>Medium</td></tr>
+<tr><td>6</td><td>Company-specific pattern data scattered</td><td>Medium</td></tr>
+<tr><td>7</td><td>No tracking of weak areas over time</td><td>Medium</td></tr>
+<tr><td>8</td><td>AI-skills expectations not covered by any platform</td><td>Medium</td></tr>
+<tr><td>9</td><td>Limited mentor access in Tier-2/3 colleges</td><td>Medium</td></tr>
+<tr><td>10</td><td>Time wasted curating a personal prep plan manually</td><td>Low-Medium</td></tr>
+</table>
+
+<h1 class="section">Customer Journey</h1>
+<div class="funnel">Awareness — WhatsApp group / senior referral / Instagram reel</div>
+<div class="funnel">Consideration — compares vs. free tools (PrepInsta, GfG, LeetCode)</div>
+<div class="funnel">Purchase — converts to paid before placement season</div>
+<div class="funnel">Retention — returns for iterative mock interviews &amp; roadmap updates</div>
+
+<h1 class="section">Key Customer Objections</h1>
+<ul class="clean">
+<li>"Why pay when PrepInsta/GeeksforGeeks are free or already familiar?"</li>
+<li>"Is the AI feedback actually accurate, or generic like a chatbot?"</li>
+<li>"I don't control my own money — parents fund subscriptions selectively"</li>
+<li>"Will this actually get me placed, or is it another content dump?"</li>
+</ul>
+
+<h1 class="section">Key Buying Triggers</h1>
+<ul class="clean">
+<li>College/TPO announces placement season is starting</li>
+<li>A friend gets rejected due to poor interview performance</li>
+<li>Resume gets silently rejected by an ATS with no explanation</li>
+<li>Sees a senior's success story after a structured routine</li>
+</ul>
+
+<h1 class="section">MVP Recommendation</h1>
+<h3>What Should Be Built First</h3>
+<p>A single, sharp wedge: <b>AI Mock Interview + Resume/ATS Feedback module.</b> Targets the highest-severity, least-served pain points without competing on content breadth against PrepInsta or GeeksforGeeks.</p>
+<h3>What Should NOT Be Built (Yet)</h3>
+<ul class="clean">
+<li>Full aptitude question bank (PrepInsta/IndiaBix dominate — low differentiation)</li>
+<li>Company-specific pattern databases (slow to build, easy to copy)</li>
+<li>Native mobile app (web-first MVP iterates faster)</li>
+<li>Community/social features (adds scope before core value is proven)</li>
+</ul>
+<h3>Success Metrics (First 30 Days)</h3>
+<table>
+<tr><th>Metric</th><th>Target</th></tr>
+<tr><td>Signed-up students</td><td>100+</td></tr>
+<tr><td>Mock interview completion rate</td><td>≥ 60%</td></tr>
+<tr><td>Resume re-submission rate</td><td>≥ 30%</td></tr>
+<tr><td>Qualitative satisfaction (NPS-style)</td><td>≥ 7/10</td></tr>
+<tr><td>Week-2 return rate</td><td>≥ 25%</td></tr>
+</table>
+
+<h1 class="section">MoSCoW Prioritization</h1>
+<table>
+<tr><th>Category</th><th>Items</th></tr>
+<tr><td><b>Must Have</b></td><td>AI mock interview (Q&amp;A + feedback), resume upload + ATS scan, basic personalized roadmap</td></tr>
+<tr><td><b>Should Have</b></td><td>Progress dashboard, weekly reminder nudges, curated coding practice links</td></tr>
+<tr><td><b>Could Have</b></td><td>Company-specific question sets, peer benchmark comparisons, referral rewards</td></tr>
+<tr><td><b>Won't Have (v1)</b></td><td>Full LMS/video courses, native mobile app, human mentor marketplace, leaderboard</td></tr>
+</table>
+
+<h1 class="section">Pricing Hypothesis</h1>
+<table>
+<tr><th>Tier</th><th>Price</th><th>Includes</th></tr>
+<tr><td>Free</td><td>₹0</td><td>1 diagnostic mock interview + basic resume scan + roadmap preview</td></tr>
+<tr><td>Premium (Monthly)</td><td>₹299–₹499</td><td>Unlimited mock interviews, full ATS report, weekly roadmap updates</td></tr>
+<tr><td>Placement Season Pass</td><td>₹999–₹1,499 (90 days)</td><td>Full access during peak placement window</td></tr>
+</table>
+<p style="color:#5a6478;font-style:italic;">Anchored below PrepInsta Prime (~₹2,000/month) — win on personalization depth, not content volume.</p>
+
+<h1 class="section">Top 5 Risks</h1>
+<table>
+<tr><th>Risk</th><th>Level</th><th>Mitigation</th></tr>
+<tr><td>Crowded market vs. funded incumbents</td><td>High</td><td>Win on AI personalization, not content breadth</td></tr>
+<tr><td>Low willingness to pay among students</td><td>High</td><td>Freemium core + monetize mock/ATS depth</td></tr>
+<tr><td>Seasonal usage hurts retention/LTV</td><td>Medium</td><td>Design for annual cohort re-acquisition</td></tr>
+<tr><td>AI feedback accuracy/trust risk</td><td>Medium</td><td>Structured rubrics + human-calibrated scoring</td></tr>
+<tr><td>Small founding team bandwidth</td><td>Medium</td><td>Tight MVP scope — one module, not eight</td></tr>
+</table>
+
+<h1 class="section">30-Day MVP Plan</h1>
+<table>
+<tr><th>Week</th><th>Focus</th><th>Deliverables</th></tr>
+<tr><td>1</td><td>Validate &amp; Scope</td><td>Interview 20–30 students; lock wedge; write 1-page spec</td></tr>
+<tr><td>2</td><td>Build Scrappy MVP</td><td>LLM-powered resume/ATS scorer + mock Q&amp;A feedback; simple web front-end</td></tr>
+<tr><td>3</td><td>Launch to First Users</td><td>Recruit 50–100 students via WhatsApp/Unstop; track completion &amp; feedback</td></tr>
+<tr><td>4</td><td>Iterate &amp; Decide</td><td>Fix friction points; measure return rate; double down, expand, or pivot</td></tr>
+</table>
+
+<h1 class="section">Founder Action Sheet — Top 10 Next Actions</h1>
+<ul class="clean">
+<li>1. Interview 20–30 real students across 2–3 colleges this week</li>
+<li>2. Lock scope to ONE module: AI mock interview + resume/ATS feedback</li>
+<li>3. Write a 1-page problem/solution spec before writing any code</li>
+<li>4. Prototype resume scoring using an LLM API (no custom ML needed for v1)</li>
+<li>5. Build a simple web app — skip native mobile entirely</li>
+<li>6. Recruit first 50 users via college WhatsApp/Telegram/Unstop communities</li>
+<li>7. Set up a lightweight feedback loop (Google Form / in-app NPS)</li>
+<li>8. Track completion rate, return rate, and satisfaction weekly</li>
+<li>9. Avoid fundraising conversations until usage data exists</li>
+<li>10. Revisit MoSCoW list after 30 days using real data, not assumptions</li>
+</ul>
+
+<h1 class="section">Scores (0–100)</h1>
+<div class="score-grid">
+  <div class="score-card"><div class="num">72</div><div class="lbl">Customer Clarity</div></div>
+  <div class="score-card"><div class="num">78</div><div class="lbl">Problem Severity</div></div>
+  <div class="score-card"><div class="num">58</div><div class="lbl">PMF Potential</div></div>
+  <div class="score-card"><div class="num">40</div><div class="lbl">MVP Readiness</div></div>
+</div>
+
+<h1 class="section">Final Verdict</h1>
+<div class="verdict">
+<h2>🟡 Promising but Unvalidated</h2>
+<p>The problem is real, timely, and independently corroborated by market data. Customer clarity is strong for an idea-stage venture. The path forward is narrow and disciplined: ship the mock-interview + ATS wedge, get 100 genuine student users, and let real engagement and retention data — not assumptions — determine whether this becomes a fundable, defensible business.</p>
+</div>
+
+<p class="footer">Prepared as a strategic planning document in a VC/YC-style research format. Persona and market details are founder-informed hypotheses pending primary validation. Not investment, legal, or financial advice.</p>
+
+</body>
+</html>

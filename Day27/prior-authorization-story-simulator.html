@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prior Authorization Story Simulator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.85); }
+    60% { opacity: 1; transform: scale(1.03); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fall {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0.9; }
+  }
+  .msg-enter { animation: fadeSlideIn 0.35s ease-out; }
+  .scene-enter { animation: popIn 0.4s ease-out; }
+  .confetti-piece {
+    position: fixed;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    z-index: 50;
+    animation: fall linear forwards;
+  }
+  .typing-dot {
+    animation: bounce 1s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #bfdbfe; border-radius: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  .choice-btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .choice-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -6px rgba(37, 99, 235, 0.35);
+  }
+  .choice-btn:active {
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-white min-h-screen font-sans text-slate-800">
+
+<div class="max-w-3xl mx-auto min-h-screen flex flex-col px-3 sm:px-4">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-blue-100 pt-4 pb-3 px-1 sm:px-2">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white text-lg shadow-sm">🩺</div>
+        <div>
+          <h1 class="text-sm sm:base font-bold text-blue-900 leading-tight">Prior Authorization Story Simulator</h1>
+          <p class="text-xs text-blue-400 -mt-0.5">An educational walkthrough</p>
+        </div>
+      </div>
+      <button id="restartBtn" class="text-xs sm:text-sm font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-full px-3 py-1.5 transition">
+        ↺ Restart Story
+      </button>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+      <div id="progressBar" class="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out" style="width: 12.5%"></div>
+    </div>
+    <div class="flex justify-between mt-1">
+      <span id="sceneCounter" class="text-xs text-blue-500 font-medium">Scene 1 of 8</span>
+      <span id="sceneTitle" class="text-xs text-blue-400 italic">Doctor Visit</span>
+    </div>
+  </header>
+
+  <!-- Chat container -->
+  <main id="chatContainer" class="flex-1 overflow-y-auto py-4 px-1 sm:px-2 space-y-3"></main>
+
+  <!-- Choices -->
+  <footer id="choiceArea" class="sticky bottom-0 bg-white/95 backdrop-blur border-t border-blue-100 py-3 px-1 sm:px-2 flex flex-col sm:flex-row gap-2 justify-center"></footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const chatContainer = document.getElementById("chatContainer");
+  const choiceArea = document.getElementById("choiceArea");
+  const progressBar = document.getElementById("progressBar");
+  const sceneCounter = document.getElementById("sceneCounter");
+  const sceneTitleEl = document.getElementById("sceneTitle");
+  const restartBtn = document.getElementById("restartBtn");
+
+  const TOTAL_SCENES = 8;
+  let currentScene = 1;
+
+  const sceneTitles = [
+    "Doctor Visit",
+    "Insurance Roadblock",
+    "What is Prior Authorization?",
+    "Insurance Review",
+    "Denial",
+    "Appeal",
+    "Approval",
+    "Takeaways"
+  ];
+
+  // ---------- Utility: DOM builders (no innerHTML on chatContainer) ----------
+
+  function scrollToBottom() {
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  function updateProgress() {
+    const pct = (currentScene / TOTAL_SCENES) * 100;
+    progressBar.style.width = pct + "%";
+    sceneCounter.textContent = "Scene " + currentScene + " of " + TOTAL_SCENES;
+    sceneTitleEl.textContent = sceneTitles[currentScene - 1];
+  }
+
+  function createNarratorLine(text) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "msg-enter text-center italic text-slate-500 text-sm px-6 py-1";
+    wrapper.textContent = text;
+    return wrapper;
+  }
+
+  function createSceneDivider(label) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "scene-enter flex items-center gap-3 py-2";
+
+    const line1 = document.createElement("div");
+    line1.className = "flex-1 h-px bg-blue-200";
+
+    const badge = document.createElement("span");
+    badge.className = "text-xs font-semibold text-blue-500 bg-blue-50 border border-blue-200 rounded-full px-3 py-1 whitespace-nowrap";
+    badge.textContent = label;
+
+    const line2 = document.createElement("div");
+    line2.className = "flex-1 h-px bg-blue-200";
+
+    wrapper.appendChild(line1);
+    wrapper.appendChild(badge);
+    wrapper.appendChild(line2);
+    return wrapper;
+  }
+
+  function createChatBubble(speaker, text, side) {
+    // side: "left" (Rahul) or "right" (Priya)
+    const row = document.createElement("div");
+    row.className = "msg-enter flex items-end gap-2 " + (side === "right" ? "flex-row-reverse" : "flex-row");
+
+    const avatar = document.createElement("div");
+    avatar.className = "w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 shadow-sm " +
+      (side === "right" ? "bg-blue-600" : "bg-slate-200");
+    avatar.textContent = speaker === "Rahul" ? "👦" : "👧";
+
+    const bubbleWrap = document.createElement("div");
+    bubbleWrap.className = "max-w-[75%] flex flex-col " + (side === "right" ? "items-end" : "items-start");
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "text-[11px] text-slate-400 mb-0.5 px-1";
+    nameEl.textContent = speaker;
+
+    const bubble = document.createElement("div");
+    bubble.className = "rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm " +
+      (side === "right"
+        ? "bg-blue-600 text-white rounded-br-sm"
+        : "bg-white border border-slate-200 text-slate-700 rounded-bl-sm");
+    bubble.textContent = text;
+
+    bubbleWrap.appendChild(nameEl);
+    bubbleWrap.appendChild(bubble);
+
+    row.appendChild(avatar);
+    row.appendChild(bubbleWrap);
+    return row;
+  }
+
+  function createInfoCard(title, bodyLines, footNote) {
+    const card = document.createElement("div");
+    card.className = "msg-enter bg-blue-50 border border-blue-200 rounded-2xl p-4 text-sm text-slate-700 space-y-2";
+
+    if (title) {
+      const h = document.createElement("p");
+      h.className = "font-semibold text-blue-800";
+      h.textContent = title;
+      card.appendChild(h);
+    }
+
+    bodyLines.forEach(function (line) {
+      const p = document.createElement("p");
+      p.className = "flex gap-2";
+      const bullet = document.createElement("span");
+      bullet.className = "text-blue-400";
+      bullet.textContent = "•";
+      const span = document.createElement("span");
+      span.textContent = line;
+      p.appendChild(bullet);
+      p.appendChild(span);
+      card.appendChild(p);
+    });
+
+    if (footNote) {
+      const note = document.createElement("p");
+      note.className = "text-xs text-blue-500 italic border-t border-blue-200 pt-2 mt-2";
+      note.textContent = "Educational information: " + footNote;
+      card.appendChild(note);
+    }
+
+    return card;
+  }
+
+  function createWorkflowCard(steps) {
+    const card = document.createElement("div");
+    card.className = "msg-enter bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center gap-1 text-sm font-medium text-slate-700";
+
+    steps.forEach(function (step, idx) {
+      const stepEl = document.createElement("div");
+      stepEl.className = "bg-slate-100 rounded-lg px-4 py-1.5 w-full text-center";
+      stepEl.textContent = step;
+      card.appendChild(stepEl);
+
+      if (idx < steps.length - 1) {
+        const arrow = document.createElement("div");
+        arrow.className = "text-blue-400 text-lg leading-none";
+        arrow.textContent = "↓";
+        card.appendChild(arrow);
+      }
+    });
+
+    return card;
+  }
+
+  function createDenialCard() {
+    const card = document.createElement("div");
+    card.className = "msg-enter bg-rose-50 border border-rose-200 rounded-2xl p-4 text-sm text-rose-700 flex items-center gap-3";
+
+    const icon = document.createElement("div");
+    icon.className = "text-2xl";
+    icon.textContent = "❌";
+
+    const textWrap = document.createElement("div");
+
+    const title = document.createElement("p");
+    title.className = "font-semibold";
+    title.textContent = "Prior Authorization Denied";
+
+    const reason = document.createElement("p");
+    reason.className = "text-rose-600";
+    reason.textContent = "Reason: Missing Step Therapy Documentation";
+
+    textWrap.appendChild(title);
+    textWrap.appendChild(reason);
+
+    card.appendChild(icon);
+    card.appendChild(textWrap);
+    return card;
+  }
+
+  function createApprovalCard() {
+    const card = document.createElement("div");
+    card.className = "scene-enter bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-sm text-emerald-700 space-y-2";
+
+    const iconRow = document.createElement("div");
+    iconRow.className = "flex items-center gap-2 text-lg font-semibold text-emerald-700";
+    const icon = document.createElement("span");
+    icon.textContent = "✅";
+    const label = document.createElement("span");
+    label.textContent = "Prior Authorization Approved";
+    iconRow.appendChild(icon);
+    iconRow.appendChild(label);
+
+    const refNum = document.createElement("p");
+    refNum.className = "font-mono text-xs bg-white border border-emerald-200 rounded-lg px-3 py-1.5 inline-block";
+    refNum.textContent = "Reference Number: PA-2026-77419-RH";
+
+    const stored = document.createElement("p");
+    stored.textContent = "Approval stored on file. No repeat Prior Authorization required for Humira.";
+
+    card.appendChild(iconRow);
+    card.appendChild(refNum);
+    card.appendChild(stored);
+    return card;
+  }
+
+  function createTakeawaysCard() {
+    const wrap = document.createElement("div");
+    wrap.className = "scene-enter grid sm:grid-cols-2 gap-3";
+
+    const patientCard = document.createElement("div");
+    patientCard.className = "bg-white border border-slate-200 rounded-2xl p-4 space-y-2";
+    const pTitle = document.createElement("p");
+    pTitle.className = "font-semibold text-blue-800 flex items-center gap-2";
+    pTitle.textContent = "👦 Patient Perspective";
+    patientCard.appendChild(pTitle);
+    [
+      "A diagnosis doesn't always mean immediate access to treatment.",
+      "Insurance review steps like Prior Authorization can delay care.",
+      "A denial isn't the end — appeals with proper documentation can succeed.",
+      "Staying informed and patient during the process helps reduce stress."
+    ].forEach(function (line) {
+      const p = document.createElement("p");
+      p.className = "text-sm text-slate-600 flex gap-2";
+      const bullet = document.createElement("span");
+      bullet.className = "text-blue-400";
+      bullet.textContent = "•";
+      const span = document.createElement("span");
+      span.textContent = line;
+      p.appendChild(bullet);
+      p.appendChild(span);
+      patientCard.appendChild(p);
+    });
+
+    const systemCard = document.createElement("div");
+    systemCard.className = "bg-white border border-slate-200 rounded-2xl p-4 space-y-2";
+    const sTitle = document.createElement("p");
+    sTitle.className = "font-semibold text-blue-800 flex items-center gap-2";
+    sTitle.textContent = "🏥 System Perspective";
+    systemCard.appendChild(sTitle);
+    [
+      "Denial Rate — the share of PA requests initially rejected.",
+      "Appeal Rate — how often denials are formally challenged.",
+      "Resolution Time — how long it takes to reach a final decision.",
+      "Operational Efficiency — staff time and cost spent managing PA workflows."
+    ].forEach(function (line) {
+      const p = document.createElement("p");
+      p.className = "text-sm text-slate-600 flex gap-2";
+      const bullet = document.createElement("span");
+      bullet.className = "text-blue-400";
+      bullet.textContent = "•";
+      const span = document.createElement("span");
+      span.textContent = line;
+      p.appendChild(bullet);
+      p.appendChild(span);
+      systemCard.appendChild(p);
+    });
+
+    wrap.appendChild(patientCard);
+    wrap.appendChild(systemCard);
+    return wrap;
+  }
+
+  function createJourneyCompleteBanner() {
+    const banner = document.createElement("div");
+    banner.className = "scene-enter text-center bg-blue-600 text-white rounded-2xl py-4 px-5 font-semibold text-base shadow-md";
+    banner.textContent = "🎉 Journey Complete";
+    return banner;
+  }
+
+  function createTypingIndicator() {
+    const row = document.createElement("div");
+    row.className = "msg-enter flex items-end gap-2";
+    row.id = "typingIndicator";
+
+    const avatar = document.createElement("div");
+    avatar.className = "w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 shadow-sm bg-slate-200";
+    avatar.textContent = "👧";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1 items-center shadow-sm";
+
+    for (let i = 0; i < 3; i++) {
+      const dot = document.createElement("span");
+      dot.className = "typing-dot w-1.5 h-1.5 rounded-full bg-slate-400 inline-block";
+      bubble.appendChild(dot);
+    }
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    return row;
+  }
+
+  function appendMessage(node) {
+    chatContainer.appendChild(node);
+    scrollToBottom();
+  }
+
+  function showTypingThenAppend(speaker, text, side, delay) {
+    return new Promise(function (resolve) {
+      const indicator = createTypingIndicator();
+      appendMessage(indicator);
+      setTimeout(function () {
+        const existing = document.getElementById("typingIndicator");
+        if (existing) existing.remove();
+        appendMessage(createChatBubble(speaker, text, side));
+        resolve();
+      }, delay || 900);
+    });
+  }
+
+  function clearChoices() {
+    while (choiceArea.firstChild) {
+      choiceArea.removeChild(choiceArea.firstChild);
+    }
+  }
+
+  function renderChoices(options) {
+    clearChoices();
+    options.forEach(function (opt) {
+      const btn = document.createElement("button");
+      btn.className = "choice-btn bg-white border border-blue-300 text-blue-700 font-medium text-sm rounded-full px-5 py-2.5 hover:bg-blue-50";
+      btn.textContent = opt.label;
+      btn.addEventListener("click", function () {
+        clearChoices();
+        opt.onClick();
+      });
+      choiceArea.appendChild(btn);
+    });
+  }
+
+  function confettiBurst() {
+    const colors = ["#2563eb", "#60a5fa", "#93c5fd", "#1d4ed8", "#bfdbfe"];
+    for (let i = 0; i < 40; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti-piece";
+      piece.style.left = Math.random() * 100 + "vw";
+      piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDuration = (2.5 + Math.random() * 1.5) + "s";
+      piece.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+      document.body.appendChild(piece);
+      setTimeout(function () { piece.remove(); }, 4200);
+    }
+  }
+
+  function goToScene(n) {
+    currentScene = n;
+    updateProgress();
+    const sceneFns = [
+      scene1, scene2, scene3, scene4, scene5, scene6, scene7, scene8
+    ];
+    sceneFns[n - 1]();
+  }
+
+  // ---------- Scenes ----------
+
+  function scene1() {
+    appendMessage(createSceneDivider("Scene 1 · Doctor Visit"));
+    appendMessage(createNarratorLine("Rahul visits City Medical Center for persistent joint pain."));
+    appendMessage(createNarratorLine("Dr. Patel examines Rahul and reviews his symptoms."));
+    appendMessage(createNarratorLine("Dr. Patel diagnoses Rheumatoid Arthritis."));
+    appendMessage(createNarratorLine("Dr. Patel prescribes Humira to manage the condition."));
+
+    renderChoices([
+      {
+        label: "Ask why Humira is needed",
+        onClick: function () {
+          appendMessage(createChatBubble("Rahul", "Doctor, why do I need Humira specifically?", "left"));
+          showTypingThenAppend(
+            "Priya",
+            "Humira is a biologic medication that helps reduce inflammation and joint damage in Rheumatoid Arthritis. Your doctor believes it's the right fit for your condition.",
+            "right",
+            1100
+          ).then(function () {
+            renderChoices([{ label: "Continue", onClick: function () { goToScene(2); } }]);
+          });
+        }
+      },
+      {
+        label: "Accept prescription",
+        onClick: function () {
+          appendMessage(createChatBubble("Rahul", "Okay doctor, I trust your recommendation.", "left"));
+          setTimeout(function () { goToScene(2); }, 700);
+        }
+      }
+    ]);
+  }
+
+  function scene2() {
+    appendMessage(createSceneDivider("Scene 2 · Insurance Roadblock"));
+    appendMessage(createNarratorLine("Dr. Patel's office submits a Prior Authorization request directly to StarCare Health."));
+    appendMessage(createWorkflowCard(["Provider", "PA Request", "Payer"]));
+    appendMessage(createNarratorLine("Note: The pharmacy is not involved at this stage."));
+    appendMessage(createNarratorLine("If approved, this authorization is stored on file for future refills."));
+
+    renderChoices([
+      {
+        label: "Why is approval needed?",
+        onClick: function () {
+          appendMessage(createChatBubble("Rahul", "Why does the insurance company need to approve this first?", "left"));
+          showTypingThenAppend(
+            "Priya",
+            "Insurers use Prior Authorization to confirm a treatment is medically necessary and appropriate before covering its cost.",
+            "right",
+            1100
+          ).then(function () {
+            renderChoices([{ label: "Continue", onClick: function () { goToScene(3); } }]);
+          });
+        }
+      },
+      {
+        label: "Continue",
+        onClick: function () { goToScene(3); }
+      }
+    ]);
+  }
+
+  function scene3() {
+    appendMessage(createSceneDivider("Scene 3 · What is Prior Authorization?"));
+    showTypingThenAppend(
+      "Priya",
+      "Great question, Rahul. Let me walk you through what Prior Authorization actually means.",
+      "right",
+      900
+    ).then(function () {
+      appendMessage(createInfoCard(null, [
+        "Insurers request Prior Authorization to verify a treatment is medically necessary before approving coverage.",
+        "Step Therapy may require trying lower-cost treatments first before a biologic like Humira is approved.",
+        "For aggressive diseases like Rheumatoid Arthritis, delays in approval can allow joint damage to progress."
+      ], "AMA 2023 PA Survey: Prior Authorization causes treatment delays for the majority of physicians."));
+
+      renderChoices([
+        {
+          label: "Tell me more",
+          onClick: function () {
+            appendMessage(createChatBubble("Rahul", "Can you tell me more about Step Therapy?", "left"));
+            showTypingThenAppend(
+              "Priya",
+              "Step Therapy means insurers may ask patients to try and fail a cheaper alternative first, even if a doctor already prefers a specific medication.",
+              "right",
+              1100
+            ).then(function () {
+              renderChoices([{ label: "Continue", onClick: function () { goToScene(4); } }]);
+            });
+          }
+        },
+        {
+          label: "Continue",
+          onClick: function () { goToScene(4); }
+        }
+      ]);
+    });
+  }
+
+  function scene4() {
+    appendMessage(createSceneDivider("Scene 4 · Insurance Review"));
+    showTypingThenAppend(
+      "Priya",
+      "Now StarCare Health reviews several parts of your case before making a decision.",
+      "right",
+      900
+    ).then(function () {
+      appendMessage(createInfoCard("What StarCare Health Reviews", [
+        "Eligibility — confirming Rahul's active insurance coverage.",
+        "Clinical Documentation — Dr. Patel's notes supporting the diagnosis.",
+        "ICD-10 Diagnosis — the standardized code identifying Rheumatoid Arthritis.",
+        "Step Therapy History — records of any prior treatments already tried."
+      ]));
+
+      renderChoices([
+        {
+          label: "Continue Review",
+          onClick: function () { goToScene(5); }
+        },
+        {
+          label: "Ask another question",
+          onClick: function () {
+            appendMessage(createChatBubble("Rahul", "What happens if something is missing from my file?", "left"));
+            showTypingThenAppend(
+              "Priya",
+              "If any required documentation is missing or incomplete, the request is often denied until it's provided.",
+              "right",
+              1100
+            ).then(function () {
+              renderChoices([{ label: "Continue", onClick: function () { goToScene(5); } }]);
+            });
+          }
+        }
+      ]);
+    });
+  }
+
+  function scene5() {
+    appendMessage(createSceneDivider("Scene 5 · Denial"));
+    appendMessage(createNarratorLine("StarCare Health has reviewed the request."));
+    appendMessage(createDenialCard());
+    appendMessage(createInfoCard(null, [
+      "A denial is not permanent — it can often be resolved through an appeal with the right documentation."
+    ], "Resolving PA denials often costs physician offices more than two staff hours."));
+
+    renderChoices([
+      {
+        label: "Appeal",
+        onClick: function () { goToScene(6); }
+      },
+      {
+        label: "Learn why",
+        onClick: function () {
+          appendMessage(createChatBubble("Rahul", "Why exactly was it denied?", "left"));
+          showTypingThenAppend(
+            "Priya",
+            "The submission was missing documentation showing you had tried a required Step Therapy medication first.",
+            "right",
+            1100
+          ).then(function () {
+            renderChoices([{ label: "Continue to Appeal", onClick: function () { goToScene(6); } }]);
+          });
+        }
+      }
+    ]);
+  }
+
+  function scene6() {
+    appendMessage(createSceneDivider("Scene 6 · Appeal"));
+    showTypingThenAppend(
+      "Priya",
+      "Let's put together a strong appeal so this can be reconsidered.",
+      "right",
+      900
+    ).then(function () {
+      appendMessage(createInfoCard("Building the Appeal", [
+        "Letter of Medical Necessity — Dr. Patel explains why Humira is required for Rahul.",
+        "Clinical notes — detailed records supporting the diagnosis and treatment plan.",
+        "Supporting documents — lab results and prior treatment history.",
+        "Formal appeal — the complete package submitted back to StarCare Health."
+      ]));
+
+      renderChoices([
+        {
+          label: "Submit Appeal",
+          onClick: function () {
+            appendMessage(createChatBubble("Rahul", "Let's submit the appeal with everything included.", "left"));
+            setTimeout(function () { goToScene(7); }, 900);
+          }
+        },
+        {
+          label: "Review Documents",
+          onClick: function () {
+            appendMessage(createChatBubble("Rahul", "Can we double check everything is included first?", "left"));
+            showTypingThenAppend(
+              "Priya",
+              "Yes — I've reviewed the file. The Letter of Medical Necessity and clinical notes are complete. We're ready to submit.",
+              "right",
+              1100
+            ).then(function () {
+              renderChoices([{ label: "Submit Appeal", onClick: function () { goToScene(7); } }]);
+            });
+          }
+        }
+      ]);
+    });
+  }
+
+  function scene7() {
+    appendMessage(createSceneDivider("Scene 7 · Approval"));
+    appendMessage(createNarratorLine("StarCare Health has completed its review of the appeal."));
+
+    setTimeout(function () {
+      appendMessage(createApprovalCard());
+      confettiBurst();
+
+      renderChoices([
+        {
+          label: "Continue",
+          onClick: function () { goToScene(8); }
+        },
+        {
+          label: "View Summary",
+          onClick: function () {
+            appendMessage(createChatBubble("Rahul", "Can you summarize what just happened?", "left"));
+            showTypingThenAppend(
+              "Priya",
+              "Of course — your appeal included the missing Step Therapy documentation and Letter of Medical Necessity, which resolved the denial. Humira is now approved and on file.",
+              "right",
+              1100
+            ).then(function () {
+              renderChoices([{ label: "Continue", onClick: function () { goToScene(8); } }]);
+            });
+          }
+        }
+      ]);
+    }, 800);
+  }
+
+  function scene8() {
+    appendMessage(createSceneDivider("Scene 8 · Takeaways"));
+    appendMessage(createTakeawaysCard());
+    appendMessage(createJourneyCompleteBanner());
+
+    clearChoices();
+    const restartAgainBtn = document.createElement("button");
+    restartAgainBtn.className = "choice-btn bg-blue-600 text-white font-medium text-sm rounded-full px-6 py-2.5 hover:bg-blue-700";
+    restartAgainBtn.textContent = "↺ Restart Story";
+    restartAgainBtn.addEventListener("click", resetStory);
+    choiceArea.appendChild(restartAgainBtn);
+  }
+
+  // ---------- Reset ----------
+
+  function resetStory() {
+    while (chatContainer.firstChild) {
+      chatContainer.removeChild(chatContainer.firstChild);
+    }
+    clearChoices();
+    goToScene(1);
+  }
+
+  restartBtn.addEventListener("click", resetStory);
+
+  // ---------- Init ----------
+  goToScene(1);
+
+})();
+</script>
+</body>
+</html>

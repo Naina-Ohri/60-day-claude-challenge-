@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Operation Lifeline: Supply Chain Crisis Lab</title>
+<style>
+  :root{
+    --bg-0:#0a0e14;
+    --bg-1:#0f1420;
+    --bg-2:#151b2b;
+    --bg-3:#1c2438;
+    --accent:#22d3ee;
+    --accent-2:#a78bfa;
+    --good:#34d399;
+    --warn:#fbbf24;
+    --bad:#f87171;
+    --text-0:#e6ebf5;
+    --text-1:#9fb0cc;
+    --text-2:#6b7893;
+    --border:#26304a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:radial-gradient(circle at 20% 0%, #131a2a 0%, var(--bg-0) 55%);
+    color:var(--text-0);
+    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+  }
+  #root{min-height:100vh;}
+  .app-shell{
+    max-width:1100px;
+    margin:0 auto;
+    padding:24px 20px 60px;
+    min-height:100vh;
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .brand{
+    display:flex;align-items:center;gap:10px;
+    font-weight:700;
+    font-size:1.15rem;
+    letter-spacing:0.5px;
+  }
+  .brand .dot{
+    width:12px;height:12px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 12px 2px var(--accent);
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:.5;transform:scale(1.25);}
+  }
+  .stage-pill{
+    font-size:.75rem;
+    color:var(--text-1);
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    padding:6px 12px;
+    border-radius:999px;
+    letter-spacing:.5px;
+  }
+  .progress-track{
+    width:100%;
+    height:8px;
+    background:var(--bg-2);
+    border-radius:999px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    margin-bottom:28px;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    border-radius:999px;
+    transition:width .6s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 0 10px var(--accent);
+  }
+  .card{
+    background:linear-gradient(160deg,var(--bg-2),var(--bg-1));
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+    animation:fadeSlide .5s ease;
+  }
+  @keyframes fadeSlide{
+    from{opacity:0;transform:translateY(14px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  h1{
+    font-size:1.9rem;
+    margin:0 0 8px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:.5px;
+  }
+  h2{
+    font-size:1.35rem;
+    margin:0 0 6px;
+    color:var(--text-0);
+  }
+  h3{
+    font-size:1.05rem;
+    margin:0 0 10px;
+    color:var(--accent);
+  }
+  p{color:var(--text-1);line-height:1.55;}
+  .muted{color:var(--text-2);font-size:.85rem;}
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:12px 22px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--bg-3);
+    color:var(--text-0);
+    font-size:.95rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .2s ease;
+    user-select:none;
+  }
+  .btn:hover{
+    transform:translateY(-2px);
+    border-color:var(--accent);
+    box-shadow:0 6px 18px rgba(34,211,238,.18);
+  }
+  .btn:active{transform:translateY(0);}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--accent),#0ea5c4);
+    color:#04141a;
+    border:none;
+  }
+  .btn-primary:hover{
+    box-shadow:0 8px 22px rgba(34,211,238,.35);
+  }
+  .btn-primary:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+  }
+  .btn-ghost{
+    background:transparent;
+  }
+  .btn-danger{
+    background:linear-gradient(135deg,#f87171,#dc2626);
+    color:#2a0505;
+    border:none;
+  }
+  .row{display:flex;gap:14px;flex-wrap:wrap;}
+  .row.end{justify-content:flex-end;}
+  .row.between{justify-content:space-between;align-items:center;}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:16px;
+    margin:18px 0;
+  }
+  .option-card{
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px;
+    cursor:pointer;
+    transition:all .2s ease;
+    position:relative;
+  }
+  .option-card:hover{
+    border-color:var(--accent);
+    transform:translateY(-3px);
+    box-shadow:0 10px 24px rgba(0,0,0,.4);
+  }
+  .option-card.selected{
+    border-color:var(--accent);
+    background:linear-gradient(160deg, rgba(34,211,238,.14), var(--bg-3));
+    box-shadow:0 0 0 1px var(--accent) inset, 0 10px 24px rgba(34,211,238,.15);
+  }
+  .option-card.correct{
+    border-color:var(--good);
+    background:linear-gradient(160deg, rgba(52,211,153,.16), var(--bg-3));
+  }
+  .option-card.wrong{
+    border-color:var(--bad);
+    background:linear-gradient(160deg, rgba(248,113,113,.16), var(--bg-3));
+  }
+  .option-card .tag{
+    display:inline-block;
+    font-size:.7rem;
+    letter-spacing:.5px;
+    color:var(--text-2);
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    padding:3px 8px;
+    border-radius:999px;
+    margin-bottom:8px;
+  }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:.75rem;
+    padding:4px 10px;
+    border-radius:999px;
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    color:var(--text-1);
+  }
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:14px;
+    margin:18px 0;
+  }
+  .stat-box{
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    text-align:center;
+  }
+  .stat-box .val{
+    font-size:1.6rem;
+    font-weight:800;
+    color:var(--accent);
+  }
+  .stat-box .lbl{
+    font-size:.75rem;
+    color:var(--text-2);
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+  .meter{
+    height:10px;
+    background:var(--bg-2);
+    border-radius:999px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    margin-top:6px;
+  }
+  .meter-fill{
+    height:100%;
+    border-radius:999px;
+    transition:width .8s cubic-bezier(.4,0,.2,1);
+  }
+  .divider{
+    height:1px;
+    background:var(--border);
+    margin:22px 0;
+  }
+  .company-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .logo-box{
+    width:56px;height:56px;
+    border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;
+    font-size:1.3rem;
+    color:#04141a;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    flex-shrink:0;
+  }
+  .crisis-banner{
+    background:linear-gradient(90deg, rgba(248,113,113,.14), rgba(251,191,36,.1));
+    border:1px solid rgba(248,113,113,.4);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:20px;
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+  }
+  .crisis-icon{
+    font-size:1.8rem;
+    line-height:1;
+  }
+  .footer-nav{
+    margin-top:26px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .round-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .round-tab{
+    padding:6px 14px;
+    border-radius:999px;
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    font-size:.78rem;
+    color:var(--text-2);
+  }
+  .round-tab.active{
+    color:#04141a;
+    background:var(--accent);
+    border-color:var(--accent);
+    font-weight:700;
+  }
+  .round-tab.done{
+    color:var(--good);
+    border-color:var(--good);
+  }
+  textarea, select{
+    width:100%;
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    color:var(--text-0);
+    border-radius:10px;
+    padding:10px;
+    font-family:inherit;
+  }
+  .slider-wrap{margin:16px 0;}
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--accent);
+  }
+  .kpi-callout{
+    font-size:.85rem;
+    color:var(--text-2);
+    margin-top:4px;
+  }
+  .score-hero{
+    text-align:center;
+    padding:30px 10px;
+  }
+  .score-ring{
+    width:180px;height:180px;
+    margin:0 auto 18px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+  .score-ring .value{
+    font-size:2.4rem;
+    font-weight:800;
+  }
+  .score-ring .sub{
+    font-size:.7rem;
+    color:var(--text-2);
+    letter-spacing:1px;
+    text-transform:uppercase;
+  }
+  .rank-badge{
+    display:inline-block;
+    padding:8px 20px;
+    border-radius:999px;
+    font-weight:700;
+    letter-spacing:.5px;
+    margin-top:10px;
+  }
+  .log-list{
+    list-style:none;
+    padding:0;margin:0;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .log-item{
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    border-left:4px solid var(--accent);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:.88rem;
+    color:var(--text-1);
+  }
+  .log-item.bad{border-left-color:var(--bad);}
+  .log-item.good{border-left-color:var(--good);}
+  .selectable-count{
+    font-size:.85rem;
+    color:var(--text-2);
+    margin-bottom:10px;
+  }
+  .welcome-hero{
+    text-align:center;
+    padding:40px 10px 20px;
+  }
+  .welcome-hero .icon{
+    font-size:3.4rem;
+    margin-bottom:12px;
+  }
+  .feature-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:14px;
+    margin:26px 0;
+    text-align:left;
+  }
+  .feature-item{
+    background:var(--bg-3);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+  }
+  .feature-item .fi-title{
+    font-weight:700;
+    color:var(--accent);
+    margin-bottom:4px;
+    font-size:.92rem;
+  }
+  .feature-item .fi-desc{
+    font-size:.82rem;
+    color:var(--text-2);
+  }
+  @media (max-width:600px){
+    .app-shell{padding:16px 12px 40px;}
+    h1{font-size:1.5rem;}
+    .card{padding:18px;}
+    .score-ring{width:150px;height:150px;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useMemo, useCallback } = React;
+
+/* ============================== DATA ============================== */
+
+const COMPANY_NAMES = [
+  "Veridian Motors","Northstar Electronics","Solace Foods Group","Ampere Robotics",
+  "Cobalt Textiles","BluePeak Pharma","Ironclad Logistics","Nimbus Semiconductor",
+  "Terraform Agritech","Vantage Apparel","Halcyon Appliances","Quarry Industrial",
+  "Meridian Beverages","Pulse Consumer Goods","Orion Automotive Parts"
+];
+const INDUSTRIES = [
+  "Automotive Manufacturing","Consumer Electronics","Packaged Foods",
+  "Industrial Robotics","Apparel & Textiles","Pharmaceuticals",
+  "Third-Party Logistics","Semiconductor Fabrication","Agricultural Technology",
+  "Home Appliances","Heavy Industrial Equipment","Beverages"
+];
+const HQ_LOCATIONS = [
+  "Rotterdam, Netherlands","Austin, USA","Singapore","Chennai, India","Busan, South Korea",
+  "Hamburg, Germany","Ho Chi Minh City, Vietnam","São Paulo, Brazil","Manchester, UK","Nairobi, Kenya"
+];
+const SIZES = [
+  { label: "Mid-Market", revenue: "$180M annual revenue", employees: "1,200 employees" },
+  { label: "Enterprise", revenue: "$2.4B annual revenue", employees: "14,500 employees" },
+  { label: "Global Conglomerate", revenue: "$9.8B annual revenue", employees: "48,000 employees" },
+];
+
+function generateCompany(rng) {
+  const name = COMPANY_NAMES[rng.int(COMPANY_NAMES.length)];
+  const industry = INDUSTRIES[rng.int(INDUSTRIES.length)];
+  const hq = HQ_LOCATIONS[rng.int(HQ_LOCATIONS.length)];
+  const size = SIZES[rng.int(SIZES.length)];
+  const initials = name.split(" ").map(w => w[0]).join("").slice(0,3).toUpperCase();
+  const supplierCount = 40 + rng.int(160);
+  const warehouseCount = 3 + rng.int(22);
+  const skuCount = 500 + rng.int(9500);
+  return { name, industry, hq, size, initials, supplierCount, warehouseCount, skuCount };
+}
+
+const CRISES = [
+  {
+    id: "port-strike",
+    icon: "🚢",
+    title: "Major Port Strike Paralyzes Exports",
+    desc: "Dockworkers at your primary export port have launched an indefinite strike over wage disputes, freezing 60% of your outbound container capacity.",
+    severity: "High",
+  },
+  {
+    id: "supplier-collapse",
+    icon: "🏭",
+    title: "Tier-1 Supplier Files for Bankruptcy",
+    desc: "Your largest single-source component supplier has filed for insolvency overnight, threatening production lines within 72 hours.",
+    severity: "Critical",
+  },
+  {
+    id: "cyberattack",
+    icon: "🖥️",
+    title: "Ransomware Attack on Logistics Systems",
+    desc: "A ransomware attack has locked your warehouse management and fleet routing systems, leaving inventory visibility completely dark.",
+    severity: "Critical",
+  },
+  {
+    id: "natural-disaster",
+    icon: "🌪️",
+    title: "Category 4 Storm Hits Regional Hub",
+    desc: "A severe storm has flooded your central distribution hub, damaging inventory and cutting off road access for an estimated two weeks.",
+    severity: "High",
+  },
+  {
+    id: "tariff-shock",
+    icon: "📉",
+    title: "Sudden Tariff Hike on Key Imports",
+    desc: "A snap 35% tariff has been imposed on your primary raw material imports, threatening margins across every product line.",
+    severity: "Medium",
+  },
+  {
+    id: "chip-shortage",
+    icon: "🔩",
+    title: "Global Component Shortage Intensifies",
+    desc: "A worldwide shortage of critical microcontrollers has pushed lead times from 6 weeks to 11 months almost overnight.",
+    severity: "High",
+  },
+  {
+    id: "geopolitical",
+    icon: "🌍",
+    title: "Border Closure Disrupts Cross-Border Trade",
+    desc: "Sudden geopolitical tensions have triggered an emergency border closure, stranding dozens of loaded trucks and shipments.",
+    severity: "Critical",
+  },
+  {
+    id: "recall",
+    icon: "⚠️",
+    title: "Safety Recall Forces Product Pull",
+    desc: "A safety defect has been discovered in a best-selling product line, forcing an emergency recall across all active markets.",
+    severity: "Medium",
+  },
+];
+
+const WAR_ROOM_RESPONSES = [
+  { id:"wr1", title:"Activate Dual-Sourcing Protocol", cost:3, speed:4, risk:2, desc:"Immediately onboard backup suppliers pre-vetted in your risk registry to diversify exposure." },
+  { id:"wr2", title:"Air-Freight Critical SKUs", cost:5, speed:5, risk:1, desc:"Reroute your highest-margin SKUs via expedited air freight to protect key customer commitments." },
+  { id:"wr3", title:"Freeze Non-Essential Spending", cost:1, speed:1, risk:1, desc:"Halt discretionary budgets company-wide to preserve cash reserves for crisis response." },
+  { id:"wr4", title:"Deploy Cross-Functional Crisis Task Force", cost:2, speed:3, risk:1, desc:"Stand up a 24/7 war room with reps from ops, finance, legal, and comms." },
+  { id:"wr5", title:"Renegotiate Customer SLAs", cost:1, speed:2, risk:3, desc:"Proactively contact top accounts to reset delivery expectations before they escalate publicly." },
+  { id:"wr6", title:"Draw Down Strategic Inventory Buffer", cost:2, speed:5, risk:2, desc:"Release safety-stock reserves held for exactly this kind of disruption." },
+  { id:"wr7", title:"Public Transparency Statement", cost:1, speed:1, risk:4, desc:"Get ahead of the story with a public statement acknowledging the disruption and response plan." },
+  { id:"wr8", title:"Emergency Credit Line Drawdown", cost:4, speed:2, risk:3, desc:"Tap your revolving credit facility to fund rapid crisis mitigation without cash-flow strain." },
+  { id:"wr9", title:"Reroute Through Alternate Logistics Hub", cost:3, speed:4, risk:2, desc:"Shift volume to a secondary regional hub with spare capacity, absorbing higher handling costs." },
+  { id:"wr10", title:"Executive Site Visit & Vendor Diplomacy", cost:2, speed:2, risk:1, desc:"Send senior leadership in person to stabilize key vendor and partner relationships." },
+];
+
+const NEGOTIATION_ROUNDS = [
+  {
+    round: 1,
+    supplier: "Halden Components Ltd.",
+    context: "Your backup supplier is offering to expedite a critical shipment, but wants a premium.",
+    options: [
+      { id:"n1a", text:"Accept the 22% premium for guaranteed 5-day delivery.", cost:8, trust:6, speed:9 },
+      { id:"n1b", text:"Counter-offer 10% premium with a 9-day delivery window.", cost:5, trust:7, speed:5 },
+      { id:"n1c", text:"Push for standard pricing but offer a long-term contract instead.", cost:2, trust:9, speed:2 },
+      { id:"n1d", text:"Walk away and search for a third alternative supplier.", cost:1, trust:3, speed:1 },
+    ],
+  },
+  {
+    round: 2,
+    supplier: "Meridian Raw Materials Co.",
+    context: "Your existing raw materials vendor is threatening to deprioritize your orders due to payment terms.",
+    options: [
+      { id:"n2a", text:"Offer immediate full payment upfront for priority handling.", cost:9, trust:8, speed:8 },
+      { id:"n2b", text:"Propose 50% upfront, 50% on delivery with priority clause.", cost:5, trust:7, speed:6 },
+      { id:"n2c", text:"Hold firm on existing net-60 terms and risk delay.", cost:1, trust:2, speed:1 },
+      { id:"n2d", text:"Escalate to their VP of Sales for a relationship-based favor.", cost:2, trust:6, speed:4 },
+    ],
+  },
+  {
+    round: 3,
+    supplier: "Coastal Freight Alliance",
+    context: "A freight partner offers spare capacity but requires a 3-year exclusivity lock-in.",
+    options: [
+      { id:"n3a", text:"Sign the 3-year exclusivity deal for guaranteed capacity now.", cost:6, trust:9, speed:9 },
+      { id:"n3b", text:"Negotiate down to a 1-year trial exclusivity period.", cost:4, trust:7, speed:6 },
+      { id:"n3c", text:"Decline exclusivity, pay spot-market premium instead.", cost:8, trust:4, speed:5 },
+      { id:"n3d", text:"Decline entirely and absorb the capacity shortfall.", cost:1, trust:3, speed:1 },
+    ],
+  },
+  {
+    round: 4,
+    supplier: "Zenith Contract Manufacturing",
+    context: "Your contract manufacturer proposes shifting a portion of production to a new, unaudited facility to speed things up.",
+    options: [
+      { id:"n4a", text:"Approve the new facility immediately to unblock production.", cost:3, trust:4, speed:9 },
+      { id:"n4b", text:"Approve with a rapid remote quality audit first (48 hrs).", cost:4, trust:7, speed:6 },
+      { id:"n4c", text:"Insist on full on-site audit before approval (1 week delay).", cost:2, trust:9, speed:2 },
+      { id:"n4d", text:"Reject the new facility and absorb the production gap.", cost:1, trust:5, speed:1 },
+    ],
+  },
+];
+
+const QUIZ_QUESTIONS = [
+  {
+    q: "Your CFO asks: what is the primary risk of over-relying on a single-source supplier during a crisis?",
+    options: [
+      "It simplifies contract management",
+      "It creates a single point of failure with no fallback capacity",
+      "It always increases unit costs",
+      "It has no meaningful risk if the supplier is large",
+    ],
+    correct: 1,
+    explain: "Single-sourcing concentrates risk: any disruption at that one supplier halts your entire supply chain with no immediate fallback.",
+  },
+  {
+    q: "The board asks why you're holding a 'safety stock' buffer despite its carrying cost. What's the best justification?",
+    options: [
+      "It guarantees higher profit margins",
+      "It eliminates the need for supplier contracts",
+      "It absorbs demand and supply variability, protecting service levels during disruptions",
+      "It is required by law in all industries",
+    ],
+    correct: 2,
+    explain: "Safety stock exists specifically to buffer against variability and disruption, trading holding cost for resilience.",
+  },
+  {
+    q: "During negotiations, a supplier offers a lower price in exchange for exclusivity. What is the key strategic trade-off?",
+    options: [
+      "Lower price vs. reduced future sourcing flexibility",
+      "There is no trade-off, exclusivity is always better",
+      "Exclusivity guarantees no future price increases forever",
+      "Exclusivity removes all supply chain risk",
+    ],
+    correct: 0,
+    explain: "Exclusivity often locks in favorable pricing but reduces your ability to pivot to alternative suppliers if conditions change.",
+  },
+  {
+    q: "A board member asks: what's the main benefit of dual-sourcing (using 2+ suppliers for a critical component)?",
+    options: [
+      "It always reduces total procurement spend",
+      "It reduces dependency risk and improves negotiating leverage",
+      "It eliminates the need for quality audits",
+      "It guarantees identical lead times from both suppliers",
+    ],
+    correct: 1,
+    explain: "Dual-sourcing spreads risk across suppliers and gives you leverage in negotiations since you're not fully dependent on one vendor.",
+  },
+  {
+    q: "Your comms team asks when to issue a public statement during a supply chain crisis. What's the best practice?",
+    options: [
+      "Never comment publicly under any circumstances",
+      "Wait until the crisis is fully resolved before saying anything",
+      "Communicate proactively and transparently once facts are verified, to control the narrative",
+      "Let customers find out only through social media rumors",
+    ],
+    correct: 2,
+    explain: "Proactive, verified, transparent communication builds trust and prevents misinformation from filling the vacuum.",
+  },
+];
+
+const AI_INVESTMENTS = [
+  { id:"ai1", title:"Predictive Demand Forecasting AI", cost:7, impact:8, desc:"ML models that forecast demand shifts weeks ahead of traditional planning cycles." },
+  { id:"ai2", title:"Real-Time Supplier Risk Monitoring", cost:5, impact:9, desc:"AI-driven monitoring of supplier financial health, news, and geopolitical risk signals." },
+  { id:"ai3", title:"Autonomous Route Optimization", cost:6, impact:7, desc:"Dynamic logistics routing that reoptimizes in real time around disruptions." },
+  { id:"ai4", title:"Computer Vision Quality Inspection", cost:4, impact:5, desc:"Automated visual defect detection across manufacturing lines." },
+  { id:"ai5", title:"Digital Twin Simulation Platform", cost:9, impact:9, desc:"A full digital twin of your supply network for stress-testing crisis scenarios." },
+  { id:"ai6", title:"AI-Powered Contract Negotiation Assistant", cost:3, impact:4, desc:"NLP tooling to accelerate supplier contract review and negotiation prep." },
+  { id:"ai7", title:"Inventory Allocation Optimization Engine", cost:5, impact:6, desc:"Algorithmic engine to dynamically reallocate inventory across warehouses." },
+  { id:"ai8", title:"Crisis Scenario Generative Simulator", cost:6, impact:7, desc:"Generative AI that runs thousands of crisis scenarios to pre-build response playbooks." },
+];
+
+/* ============================== RNG ============================== */
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return {
+    next() {
+      s ^= s << 13; s >>>= 0;
+      s ^= s >>> 17;
+      s ^= s << 5; s >>>= 0;
+      return (s >>> 0) / 4294967296;
+    },
+    int(max) { return Math.floor(this.next() * max); },
+  };
+}
+function shuffle(arr, rng) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = rng.int(i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function pickN(arr, n, rng) { return shuffle(arr, rng).slice(0, n); }
+
+/* ============================== UI HELPERS ============================== */
+
+function ProgressBar({ stage, total }) {
+  const pct = Math.round((stage / total) * 100);
+  return (
+    <div className="progress-track">
+      <div className="progress-fill" style={{ width: pct + "%" }}></div>
+    </div>
+  );
+}
+
+function StagePill({ stage, total, name }) {
+  return <div className="stage-pill">STAGE {stage} / {total} — {name}</div>;
+}
+
+function severityColor(sev) {
+  if (sev === "Critical") return "var(--bad)";
+  if (sev === "High") return "var(--warn)";
+  return "var(--good)";
+}
+
+/* ============================== SCREENS ============================== */
+
+function WelcomeScreen({ onStart }) {
+  return (
+    <div className="card">
+      <div className="welcome-hero">
+        <div className="icon">🛰️</div>
+        <h1>Operation Lifeline</h1>
+        <p style={{maxWidth:560, margin:"0 auto"}}>
+          Supply Chain Crisis Lab — step into the role of Chief Supply Chain Officer
+          at a randomly generated global company. A crisis is about to hit. Every
+          decision you make ripples through cost, speed, trust, and risk.
+        </p>
+      </div>
+      <div className="feature-list">
+        <div className="feature-item">
+          <div className="fi-title">🏢 Random Company</div>
+          <div className="fi-desc">A unique company profile generated every playthrough.</div>
+        </div>
+        <div className="feature-item">
+          <div className="fi-title">🔥 Random Crisis</div>
+          <div className="fi-desc">One of eight real-world-inspired disruption scenarios.</div>
+        </div>
+        <div className="feature-item">
+          <div className="fi-title">🧭 War Room</div>
+          <div className="fi-desc">Pick exactly 3 emergency responses under pressure.</div>
+        </div>
+        <div className="feature-item">
+          <div className="fi-title">🤝 Supplier Negotiation</div>
+          <div className="fi-desc">4 rounds of high-stakes vendor negotiation.</div>
+        </div>
+        <div className="feature-item">
+          <div className="fi-title">🎤 CEO Boardroom Quiz</div>
+          <div className="fi-desc">Prove your supply chain strategy fundamentals.</div>
+        </div>
+        <div className="feature-item">
+          <div className="fi-title">🤖 AI Strategy</div>
+          <div className="fi-desc">Choose exactly 2 AI investments to modernize the chain.</div>
+        </div>
+      </div>
+      <div className="row end">
+        <button className="btn btn-primary" onClick={onStart}>🚀 Launch Simulation</button>
+      </div>
+    </div>
+  );
+}
+
+function CompanyScreen({ company, onNext }) {
+  return (
+    <div className="card">
+      <StagePill stage={2} total={8} name="Company Briefing" />
+      <div style={{height:14}}></div>
+      <div className="company-header">
+        <div className="logo-box">{company.initials}</div>
+        <div>
+          <h2>{company.name}</h2>
+          <p style={{margin:0}} className="muted">{company.industry} · {company.hq}</p>
+        </div>
+      </div>
+      <div className="stat-grid">
+        <div className="stat-box">
+          <div className="val">{company.size.label}</div>
+          <div className="lbl">Company Tier</div>
+        </div>
+        <div className="stat-box">
+          <div className="val">{company.size.revenue}</div>
+          <div className="lbl">Revenue</div>
+        </div>
+        <div className="stat-box">
+          <div className="val">{company.size.employees}</div>
+          <div className="lbl">Workforce</div>
+        </div>
+        <div className="stat-box">
+          <div className="val">{company.supplierCount}</div>
+          <div className="lbl">Active Suppliers</div>
+        </div>
+        <div className="stat-box">
+          <div className="val">{company.warehouseCount}</div>
+          <div className="lbl">Warehouses</div>
+        </div>
+        <div className="stat-box">
+          <div className="val">{company.skuCount.toLocaleString()}</div>
+          <div className="lbl">SKUs Managed</div>
+        </div>
+      </div>
+      <p>You have just been appointed <strong>Chief Supply Chain Officer</strong> at {company.name}.
+      Your board expects operational stability. Unfortunately, stability is about to be tested.</p>
+      <div className="footer-nav">
+        <span className="muted">Company profile generated for this playthrough only.</span>
+        <button className="btn btn-primary" onClick={onNext}>Continue to Crisis Briefing →</button>
+      </div>
+    </div>
+  );
+}
+
+function CrisisScreen({ crisis, company, onNext }) {
+  return (
+    <div className="card">
+      <StagePill stage={3} total={8} name="Crisis Briefing" />
+      <div style={{height:14}}></div>
+      <div className="crisis-banner">
+        <div className="crisis-icon">{crisis.icon}</div>
+        <div>
+          <div className="badge" style={{borderColor:severityColor(crisis.severity), color:severityColor(crisis.severity)}}>
+            {crisis.severity} Severity
+          </div>
+          <h2 style={{marginTop:10}}>{crisis.title}</h2>
+          <p style={{margin:0}}>{crisis.desc}</p>
+        </div>
+      </div>
+      <p>This crisis has hit <strong>{company.name}</strong> without warning. Markets are watching.
+      Your board is convening in the next hour. It's time to assemble your war room.</p>
+      <div className="footer-nav">
+        <span className="muted">Severity affects your final Crisis Score calculation.</span>
+        <button className="btn btn-primary" onClick={onNext}>Enter War Room →</button>
+      </div>
+    </div>
+  );
+}
+
+function WarRoomScreen({ options, selected, setSelected, onNext }) {
+  const REQUIRED = 3;
+  function toggle(id) {
+    setSelected(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= REQUIRED) return prev;
+      return [...prev, id];
+    });
+  }
+  return (
+    <div className="card">
+      <StagePill stage={4} total={8} name="War Room" />
+      <div style={{height:14}}></div>
+      <h2>Assemble Your Crisis Response</h2>
+      <p>Choose exactly <strong>3 responses</strong> to deploy in the first 24 hours. Each has trade-offs
+      across cost, speed, and risk.</p>
+      <div className="selectable-count">Selected: {selected.length} / {REQUIRED}</div>
+      <div className="grid">
+        {options.map(opt => {
+          const isSel = selected.includes(opt.id);
+          return (
+            <div key={opt.id}
+                 className={"option-card" + (isSel ? " selected" : "")}
+                 onClick={() => toggle(opt.id)}>
+              <span className="tag">Response Option</span>
+              <h3>{opt.title}</h3>
+              <p style={{fontSize:".88rem"}}>{opt.desc}</p>
+              <div className="row" style={{gap:8, marginTop:10}}>
+                <span className="badge">💰 Cost {opt.cost}</span>
+                <span className="badge">⚡ Speed {opt.speed}</span>
+                <span className="badge">⚠️ Risk {opt.risk}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="footer-nav">
+        <span className="muted">Pick precisely 3 to proceed.</span>
+        <button className="btn btn-primary" disabled={selected.length !== REQUIRED} onClick={onNext}>
+          Proceed to Negotiations →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NegotiationScreen({ rounds, roundIndex, choices, onChoose, onNext, onPrevRound }) {
+  const current = rounds[roundIndex];
+  const chosenId = choices[roundIndex];
+  return (
+    <div className="card">
+      <StagePill stage={5} total={8} name="Supplier Negotiation" />
+      <div style={{height:14}}></div>
+      <div className="round-tabs">
+        {rounds.map((r, i) => (
+          <div key={i} className={"round-tab" + (i === roundIndex ? " active" : "") + (choices[i] ? " done" : "")}>
+            Round {r.round}
+          </div>
+        ))}
+      </div>
+      <h2>{current.supplier}</h2>
+      <p>{current.context}</p>
+      <div className="grid">
+        {current.options.map(opt => {
+          const isSel = chosenId === opt.id;
+          return (
+            <div key={opt.id}
+                 className={"option-card" + (isSel ? " selected" : "")}
+                 onClick={() => onChoose(roundIndex, opt.id)}>
+              <p style={{margin:0, color:"var(--text-0)", fontSize:".92rem"}}>{opt.text}</p>
+              <div className="row" style={{gap:8, marginTop:10}}>
+                <span className="badge">💰 Cost {opt.cost}</span>
+                <span className="badge">🤝 Trust {opt.trust}</span>
+                <span className="badge">⚡ Speed {opt.speed}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="footer-nav">
+        <button className="btn btn-ghost" disabled={roundIndex === 0} onClick={onPrevRound}>← Previous Round</button>
+        <button className="btn btn-primary" disabled={!chosenId} onClick={onNext}>
+          {roundIndex === rounds.length - 1 ? "Proceed to Boardroom →" : "Next Round →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function QuizScreen({ questions, qIndex, answers, onAnswer, onNext, onPrev }) {
+  const current = questions[qIndex];
+  const chosen = answers[qIndex];
+  const answered = chosen !== undefined && chosen !== null;
+  return (
+    <div className="card">
+      <StagePill stage={6} total={8} name="CEO Boardroom Quiz" />
+      <div style={{height:14}}></div>
+      <div className="round-tabs">
+        {questions.map((_, i) => (
+          <div key={i} className={"round-tab" + (i === qIndex ? " active" : "") + (answers[i] !== undefined && answers[i] !== null ? " done" : "")}>
+            Q{i + 1}
+          </div>
+        ))}
+      </div>
+      <h2>Question {qIndex + 1} of {questions.length}</h2>
+      <p>{current.q}</p>
+      <div className="grid">
+        {current.options.map((opt, idx) => {
+          let cls = "option-card";
+          if (answered) {
+            if (idx === current.correct) cls += " correct";
+            else if (idx === chosen) cls += " wrong";
+          } else if (idx === chosen) {
+            cls += " selected";
+          }
+          return (
+            <div key={idx} className={cls} onClick={() => !answered && onAnswer(qIndex, idx)}>
+              <p style={{margin:0, color:"var(--text-0)", fontSize:".92rem"}}>{opt}</p>
+            </div>
+          );
+        })}
+      </div>
+      {answered && (
+        <div className="log-item good" style={{marginTop:14}}>
+          <strong>{chosen === current.correct ? "✅ Correct. " : "❌ Not quite. "}</strong>{current.explain}
+        </div>
+      )}
+      <div className="footer-nav">
+        <button className="btn btn-ghost" disabled={qIndex === 0} onClick={onPrev}>← Previous</button>
+        <button className="btn btn-primary" disabled={!answered} onClick={onNext}>
+          {qIndex === questions.length - 1 ? "Proceed to AI Strategy →" : "Next Question →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AIStrategyScreen({ options, selected, setSelected, onNext }) {
+  const REQUIRED = 2;
+  function toggle(id) {
+    setSelected(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= REQUIRED) return prev;
+      return [...prev, id];
+    });
+  }
+  return (
+    <div className="card">
+      <StagePill stage={7} total={8} name="AI Strategy" />
+      <div style={{height:14}}></div>
+      <h2>Modernize With AI</h2>
+      <p>The board has approved a limited AI transformation budget. Choose exactly
+      <strong> 2 investments</strong> to fund for next fiscal year.</p>
+      <div className="selectable-count">Selected: {selected.length} / {REQUIRED}</div>
+      <div className="grid">
+        {options.map(opt => {
+          const isSel = selected.includes(opt.id);
+          return (
+            <div key={opt.id}
+                 className={"option-card" + (isSel ? " selected" : "")}
+                 onClick={() => toggle(opt.id)}>
+              <span className="tag">AI Investment</span>
+              <h3>{opt.title}</h3>
+              <p style={{fontSize:".88rem"}}>{opt.desc}</p>
+              <div className="row" style={{gap:8, marginTop:10}}>
+                <span className="badge">💰 Cost {opt.cost}</span>
+                <span className="badge">📈 Impact {opt.impact}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="footer-nav">
+        <span className="muted">Pick precisely 2 to finalize your strategy.</span>
+        <button className="btn btn-primary" disabled={selected.length !== REQUIRED} onClick={onNext}>
+          Generate Executive Dashboard →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== SCORE ENGINE ============================== */
+
+function computeScore({ crisis, warRoomSelected, warRoomOptions, negotiationChoices, negotiationRounds, quizAnswers, quizQuestions, aiSelected, aiOptions }) {
+  // War room aggregate
+  const wrChosen = warRoomOptions.filter(o => warRoomSelected.includes(o.id));
+  const wrSpeed = wrChosen.reduce((a,b)=>a+b.speed,0);
+  const wrCost = wrChosen.reduce((a,b)=>a+b.cost,0);
+  const wrRisk = wrChosen.reduce((a,b)=>a+b.risk,0);
+
+  // Negotiation aggregate
+  let negCost = 0, negTrust = 0, negSpeed = 0;
+  negotiationRounds.forEach((round, i) => {
+    const choiceId = negotiationChoices[i];
+    const opt = round.options.find(o => o.id === choiceId);
+    if (opt) { negCost += opt.cost; negTrust += opt.trust; negSpeed += opt.speed; }
+  });
+
+  // Quiz aggregate
+  let correctCount = 0;
+  quizQuestions.forEach((q, i) => { if (quizAnswers[i] === q.correct) correctCount++; });
+  const quizScorePct = (correctCount / quizQuestions.length) * 100;
+
+  // AI aggregate
+  const aiChosen = aiOptions.filter(o => aiSelected.includes(o.id));
+  const aiImpact = aiChosen.reduce((a,b)=>a+b.impact,0);
+  const aiCost = aiChosen.reduce((a,b)=>a+b.cost,0);
+
+  // Severity multiplier — harder crises are harder to score well against
+  const sevPenalty = crisis.severity === "Critical" ? 10 : crisis.severity === "High" ? 5 : 0;
+
+  // Normalize sub-scores to 0-100
+  const speedScore = Math.min(100, ((wrSpeed + negSpeed) / (15 + 20)) * 100);
+  const trustScore = Math.min(100, (negTrust / 40) * 100);
+  const riskScore = Math.max(0, 100 - (wrRisk / 9) * 100); // lower risk taken = higher score
+  const costEfficiency = Math.max(0, 100 - (((wrCost + negCost + aiCost) / 55) * 100));
+  const strategyScore = Math.min(100, (aiImpact / 20) * 100);
+  const boardroomScore = quizScorePct;
+
+  const rawTotal =
+    speedScore * 0.20 +
+    trustScore * 0.15 +
+    riskScore * 0.15 +
+    costEfficiency * 0.15 +
+    strategyScore * 0.15 +
+    boardroomScore * 0.20;
+
+  const finalScore = Math.max(0, Math.min(100, Math.round(rawTotal - sevPenalty)));
+
+  let rank, rankColor;
+  if (finalScore >= 85) { rank = "Crisis Master 🏆"; rankColor = "var(--good)"; }
+  else if (finalScore >= 70) { rank = "Resilient Operator 💪"; rankColor = "var(--accent)"; }
+  else if (finalScore >= 50) { rank = "Steady Hand ⚖️"; rankColor = "var(--warn)"; }
+  else { rank = "Crisis Survivor 🩹"; rankColor = "var(--bad)"; }
+
+  return {
+    finalScore, rank, rankColor,
+    breakdown: [
+      { label: "Response Speed", value: Math.round(speedScore) },
+      { label: "Supplier Trust", value: Math.round(trustScore) },
+      { label: "Risk Management", value: Math.round(riskScore) },
+      { label: "Cost Efficiency", value: Math.round(costEfficiency) },
+      { label: "AI Strategy Impact", value: Math.round(strategyScore) },
+      { label: "Boardroom IQ", value: Math.round(boardroomScore) },
+    ],
+    correctCount,
+    totalQuestions: quizQuestions.length,
+    wrChosen, aiChosen,
+  };
+}
+
+function meterColor(v) {
+  if (v >= 70) return "var(--good)";
+  if (v >= 45) return "var(--warn)";
+  return "var(--bad)";
+}
+
+function DashboardScreen({ company, crisis, scoreData, onReplay }) {
+  const ringColor = scoreData.rankColor;
+  return (
+    <div className="card">
+      <StagePill stage={8} total={8} name="Executive Dashboard" />
+      <div style={{height:14}}></div>
+      <div className="score-hero">
+        <div className="score-ring" style={{
+          background: `conic-gradient(${ringColor} ${scoreData.finalScore * 3.6}deg, var(--bg-3) 0deg)`
+        }}>
+          <div style={{
+            width:"78%", height:"78%", borderRadius:"50%",
+            background:"var(--bg-1)", display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center"
+          }}>
+            <div className="value" style={{color:ringColor}}>{scoreData.finalScore}</div>
+            <div className="sub">Crisis Score</div>
+          </div>
+        </div>
+        <h2 style={{margin:0}}>{company.name}</h2>
+        <p className="muted" style={{margin:"4px 0 0"}}>{crisis.title}</p>
+        <div className="rank-badge" style={{ background: "rgba(255,255,255,.06)", color: ringColor, border: `1px solid ${ringColor}` }}>
+          {scoreData.rank}
+        </div>
+      </div>
+
+      <div className="divider"></div>
+      <h3>Performance Breakdown</h3>
+      <div style={{display:"flex", flexDirection:"column", gap:16, margin:"16px 0"}}>
+        {scoreData.breakdown.map(item => (
+          <div key={item.label}>
+            <div className="row between">
+              <span style={{fontSize:".9rem", color:"var(--text-1)"}}>{item.label}</span>
+              <span style={{fontSize:".9rem", fontWeight:700, color:meterColor(item.value)}}>{item.value}%</span>
+            </div>
+            <div className="meter">
+              <div className="meter-fill" style={{ width: item.value + "%", background: meterColor(item.value) }}></div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="divider"></div>
+      <h3>Boardroom Quiz Result</h3>
+      <p>You answered <strong>{scoreData.correctCount} / {scoreData.totalQuestions}</strong> boardroom questions correctly.</p>
+
+      <div className="divider"></div>
+      <h3>Deployed War Room Responses</h3>
+      <ul className="log-list">
+        {scoreData.wrChosen.map(o => (
+          <li key={o.id} className="log-item">
+            <strong>{o.title}</strong> — {o.desc}
+          </li>
+        ))}
+      </ul>
+
+      <div className="divider"></div>
+      <h3>AI Investments Approved</h3>
+      <ul className="log-list">
+        {scoreData.aiChosen.map(o => (
+          <li key={o.id} className="log-item good">
+            <strong>{o.title}</strong> — {o.desc}
+          </li>
+        ))}
+      </ul>
+
+      <div className="footer-nav">
+        <span className="muted">Simulation complete. Every playthrough is randomized.</span>
+        <button className="btn btn-danger" onClick={onReplay}>🔁 Replay Simulation</button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== ROOT APP ============================== */
+
+const STAGE_NAMES = [
+  "Welcome","Company Briefing","Crisis Briefing","War Room",
+  "Supplier Negotiation","Boardroom Quiz","AI Strategy","Executive Dashboard"
+];
+
+function App() {
+  const [seedTick, setSeedTick] = useState(0);
+  const rng = useMemo(() => makeRng(Date.now() % 2147483647 + seedTick * 7919), [seedTick]);
+
+  const company = useMemo(() => generateCompany(rng), [seedTick]);
+  const crisis = useMemo(() => CRISES[rng.int(CRISES.length)], [seedTick]);
+  const warRoomOptions = useMemo(() => pickN(WAR_ROOM_RESPONSES, 6, rng), [seedTick]);
+  const negotiationRounds = useMemo(() => NEGOTIATION_ROUNDS, [seedTick]);
+  const quizQuestions = useMemo(() => pickN(QUIZ_QUESTIONS, 5, rng), [seedTick]);
+  const aiOptions = useMemo(() => pickN(AI_INVESTMENTS, 6, rng), [seedTick]);
+
+  const [stage, setStage] = useState(0);
+
+  const [warRoomSelected, setWarRoomSelected] = useState([]);
+  const [roundIndex, setRoundIndex] = useState(0);
+  const [negotiationChoices, setNegotiationChoices] = useState({});
+  const [qIndex, setQIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [aiSelected, setAiSelected] = useState([]);
+
+  const goTo = useCallback((s) => { setStage(s); window.scrollTo({top:0, behavior:"smooth"}); }, []);
+
+  function handleReplay() {
+    setSeedTick(t => t + 1);
+    setStage(0);
+    setWarRoomSelected([]);
+    setRoundIndex(0);
+    setNegotiationChoices({});
+    setQIndex(0);
+    setQuizAnswers({});
+    setAiSelected([]);
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function handleNegotiationChoose(idx, optId) {
+    setNegotiationChoices(prev => ({ ...prev, [idx]: optId }));
+  }
+
+  function handleQuizAnswer(idx, optIdx) {
+    setQuizAnswers(prev => ({ ...prev, [idx]: optIdx }));
+  }
+
+  const scoreData = useMemo(() => {
+    if (stage !== 7) return null;
+    return computeScore({
+      crisis,
+      warRoomSelected, warRoomOptions,
+      negotiationChoices, negotiationRounds,
+      quizAnswers, quizQuestions,
+      aiSelected, aiOptions,
+    });
+  }, [stage]);
+
+  return (
+    <div className="app-shell">
+      <div className="topbar">
+        <div className="brand"><span className="dot"></span> Operation Lifeline</div>
+        {stage > 0 && <div className="stage-pill">{STAGE_NAMES[stage]}</div>}
+      </div>
+      {stage > 0 && <ProgressBar stage={stage} total={7} />}
+
+      {stage === 0 && <WelcomeScreen onStart={() => goTo(1)} />}
+
+      {stage === 1 && <CompanyScreen company={company} onNext={() => goTo(2)} />}
+
+      {stage === 2 && <CrisisScreen crisis={crisis} company={company} onNext={() => goTo(3)} />}
+
+      {stage === 3 && (
+        <WarRoomScreen
+          options={warRoomOptions}
+          selected={warRoomSelected}
+          setSelected={setWarRoomSelected}
+          onNext={() => goTo(4)}
+        />
+      )}
+
+      {stage === 4 && (
+        <NegotiationScreen
+          rounds={negotiationRounds}
+          roundIndex={roundIndex}
+          choices={negotiationChoices}
+          onChoose={handleNegotiationChoose}
+          onPrevRound={() => setRoundIndex(i => Math.max(0, i - 1))}
+          onNext={() => {
+            if (roundIndex < negotiationRounds.length - 1) {
+              setRoundIndex(i => i + 1);
+            } else {
+              goTo(5);
+            }
+          }}
+        />
+      )}
+
+      {stage === 5 && (
+        <QuizScreen
+          questions={quizQuestions}
+          qIndex={qIndex}
+          answers={quizAnswers}
+          onAnswer={handleQuizAnswer}
+          onPrev={() => setQIndex(i => Math.max(0, i - 1))}
+          onNext={() => {
+            if (qIndex < quizQuestions.length - 1) {
+              setQIndex(i => i + 1);
+            } else {
+              goTo(6);
+            }
+          }}
+        />
+      )}
+
+      {stage === 6 && (
+        <AIStrategyScreen
+          options={aiOptions}
+          selected={aiSelected}
+          setSelected={setAiSelected}
+          onNext={() => goTo(7)}
+        />
+      )}
+
+      {stage === 7 && scoreData && (
+        <DashboardScreen
+          company={company}
+          crisis={crisis}
+          scoreData={scoreData}
+          onReplay={handleReplay}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

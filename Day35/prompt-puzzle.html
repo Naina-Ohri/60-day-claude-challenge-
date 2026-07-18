@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧩 Prompt Puzzle — Master AI Prompting Through Play</title>
+<style>
+  :root{
+    --bg:#0b0d14;
+    --bg2:#11141d;
+    --panel:#151926;
+    --panel2:#1b202f;
+    --border:#262c3d;
+    --text:#e9ecf5;
+    --muted:#8b93a8;
+    --accent:#7c5cff;
+    --accent2:#00d9c0;
+    --warn:#ffb454;
+    --bad:#ff5d7a;
+    --good:#4ee6a0;
+    --radius:16px;
+    --mono: 'Consolas', 'SFMono-Regular', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 10%, rgba(124,92,255,0.14), transparent 40%),
+      radial-gradient(circle at 85% 85%, rgba(0,217,192,0.10), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    padding:24px;
+  }
+  h1,h2,h3{margin:0 0 8px 0; font-weight:700; letter-spacing:-0.02em;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  header.top{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:22px; flex-wrap:wrap; gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .logo{
+    font-size:28px; width:52px;height:52px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:14px; box-shadow:0 6px 24px rgba(124,92,255,0.35);
+  }
+  .brand h1{font-size:20px;}
+  .brand p{margin:0;color:var(--muted);font-size:13px;}
+  .scoreboard{
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .chip{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:8px 12px; font-size:12px; color:var(--muted); min-width:74px; text-align:center;
+    transition:transform .25s ease, border-color .25s ease;
+  }
+  .chip b{display:block;color:var(--text);font-size:16px; font-family:var(--mono); transition:color .2s;}
+  .chip.pulse{transform:scale(1.08); border-color:var(--accent2);}
+  .chip.pulse b{color:var(--accent2);}
+
+  .progress-wrap{margin-bottom:20px;}
+  .progress-track{height:8px;background:var(--panel);border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; transition:width .5s cubic-bezier(.4,0,.2,1);}
+  .progress-label{font-size:12px;color:var(--muted); margin-top:6px; display:flex; justify-content:space-between;}
+
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:24px; margin-bottom:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    animation:fadeIn .4s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  .tag{
+    display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    background:rgba(124,92,255,0.15); color:#b7a8ff; border:1px solid rgba(124,92,255,0.35);
+    padding:4px 10px; border-radius:999px; margin-bottom:10px;
+  }
+  .tag.type-clean{background:rgba(0,217,192,0.12); color:#7ff0e0; border-color:rgba(0,217,192,0.35);}
+  .tag.type-choose{background:rgba(255,180,84,0.12); color:#ffcf8f; border-color:rgba(255,180,84,0.35);}
+
+  .desired{
+    background:var(--bg2); border:1px dashed var(--border); border-radius:12px;
+    padding:14px 16px; margin:12px 0 18px 0; color:#cfd4e6; font-size:14px;
+  }
+  .desired b{color:var(--accent2);}
+
+  /* Build the Prompt */
+  .blocks-pool, .blocks-slot{
+    min-height:64px; border-radius:12px; border:1.5px dashed var(--border);
+    padding:10px; display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start;
+    background:rgba(255,255,255,0.02);
+    transition:border-color .2s, background .2s;
+  }
+  .blocks-slot{margin-top:14px; flex-direction:column;}
+  .blocks-slot.dragover{border-color:var(--accent2); background:rgba(0,217,192,0.06);}
+  .slot-row{
+    display:flex; align-items:center; gap:10px; width:100%;
+  }
+  .slot-index{
+    width:22px;height:22px;border-radius:50%;background:var(--panel);
+    border:1px solid var(--border); font-size:11px; display:flex;align-items:center;justify-content:center;
+    color:var(--muted); flex-shrink:0;
+  }
+  .placeholder-line{
+    flex:1; height:44px; border-radius:10px; border:1px dashed var(--border);
+    display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;
+  }
+  .block{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:10px 14px; cursor:grab; font-size:13.5px; user-select:none;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    max-width:100%;
+  }
+  .block:hover{border-color:var(--accent); transform:translateY(-2px); box-shadow:0 6px 16px rgba(124,92,255,0.2);}
+  .block.dragging{opacity:.35;}
+  .block.placed{background:rgba(0,217,192,0.08); border-color:var(--accent2); cursor:default;}
+  .block.wrong-flash{animation:shake .3s ease;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  /* Clean the prompt */
+  .clean-text{
+    background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+    padding:18px; font-size:15px; line-height:2; color:#dfe3f0;
+  }
+  .fluff{
+    background:rgba(255,93,122,0.15); border:1px solid rgba(255,93,122,0.4);
+    border-radius:6px; padding:1px 6px; cursor:pointer; transition:all .15s ease;
+  }
+  .fluff:hover{background:rgba(255,93,122,0.3);}
+  .fluff.removed{
+    text-decoration:line-through; opacity:.35; background:transparent; border-color:transparent; cursor:default;
+  }
+  .keep{padding:1px 2px;}
+
+  /* Choose best prompt */
+  .options{display:grid; gap:14px; margin-top:14px;}
+  .option{
+    background:var(--bg2); border:1.5px solid var(--border); border-radius:12px;
+    padding:14px 16px; cursor:pointer; transition:all .2s ease; position:relative;
+  }
+  .option:hover{border-color:var(--accent); transform:translateY(-2px);}
+  .option .label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:6px;}
+  .option .text{font-family:var(--mono); font-size:13px; color:#dfe3f0; white-space:pre-wrap;}
+  .option.correct{border-color:var(--good); background:rgba(78,230,160,0.08);}
+  .option.incorrect{border-color:var(--bad); background:rgba(255,93,122,0.08);}
+
+  .controls{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;}
+  button{
+    font-family:inherit; font-size:14px; font-weight:600; padding:11px 20px;
+    border-radius:10px; border:1px solid var(--border); background:var(--panel2);
+    color:var(--text); cursor:pointer; transition:all .18s ease;
+  }
+  button:hover{border-color:var(--accent); transform:translateY(-1px);}
+  button:active{transform:translateY(0);}
+  button.primary{background:linear-gradient(135deg,var(--accent),#5b3fe0); border:none; color:#fff;}
+  button.primary:hover{box-shadow:0 6px 18px rgba(124,92,255,0.4);}
+  button.ghost{background:transparent;}
+  button:disabled{opacity:.4; cursor:not-allowed; transform:none;}
+
+  .feedback-panel{
+    margin-top:16px; padding:14px 16px; border-radius:12px; font-size:13.5px;
+    border:1px solid var(--border); background:var(--bg2); display:none;
+  }
+  .feedback-panel.show{display:block; animation:fadeIn .3s ease;}
+  .feedback-panel .principle{color:var(--accent2); font-weight:600; margin-bottom:6px;}
+  .compare{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;}
+  @media(max-width:640px){.compare{grid-template-columns:1fr;}}
+  .compare div{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:12.5px;}
+  .compare .lbl{color:var(--muted); text-transform:uppercase; font-size:10.5px; letter-spacing:.06em; margin-bottom:4px;}
+
+  /* toast */
+  #toasts{position:fixed; top:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:999;}
+  .toast{
+    background:var(--panel2); border:1px solid var(--border); border-left:4px solid var(--accent2);
+    padding:12px 16px; border-radius:10px; font-size:13px; min-width:220px; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    animation:slideIn .3s ease, fadeOut .3s ease 2.4s forwards;
+  }
+  .toast.bad{border-left-color:var(--bad);}
+  .toast.good{border-left-color:var(--good);}
+  @keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+  @keyframes fadeOut{to{opacity:0; transform:translateX(20px);}}
+
+  /* report */
+  .report-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:20px;}
+  @media(max-width:760px){.report-grid{grid-template-columns:1fr;}}
+  .big-score{font-size:56px; font-family:var(--mono); font-weight:700;
+    background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .rank-badge{display:inline-block; margin-top:6px; padding:6px 14px; border-radius:999px; font-size:13px; font-weight:600;
+    background:rgba(124,92,255,0.15); border:1px solid var(--accent); color:#c9bdff;}
+  .dna-row{display:flex; align-items:center; gap:10px; margin:8px 0;}
+  .dna-label{width:120px; font-size:12px; color:var(--muted);}
+  .dna-bar-track{flex:1; height:10px; background:var(--bg2); border-radius:6px; overflow:hidden; border:1px solid var(--border);}
+  .dna-bar-fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; transition:width 1s cubic-bezier(.4,0,.2,1);}
+  .dna-val{width:34px; text-align:right; font-family:var(--mono); font-size:12px; color:var(--text);}
+  .final-prompt{background:var(--bg2); border:1px solid var(--accent2); border-radius:12px; padding:16px; font-family:var(--mono); font-size:13px; margin-top:14px; white-space:pre-wrap; color:#dff7f0;}
+  .milestone{background:rgba(255,180,84,0.08); border:1px solid rgba(255,180,84,0.3); border-radius:12px; padding:14px 16px; margin-top:14px; font-size:13.5px;}
+
+  .hint-text{font-size:12px; color:var(--warn); margin-top:8px; display:none;}
+  .hint-text.show{display:block;}
+
+  footer{text-align:center; color:var(--muted); font-size:12px; margin-top:30px;}
+  .muted{color:var(--muted);}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">🧩</div>
+      <div>
+        <h1>Prompt Puzzle</h1>
+        <p>Software Development · Intermediate · Master AI Prompting Through Play</p>
+      </div>
+    </div>
+    <div class="scoreboard" id="scoreboard">
+      <div class="chip" id="chip-accuracy">Accuracy<b>100%</b></div>
+      <div class="chip" id="chip-time">Time<b>0s</b></div>
+      <div class="chip" id="chip-moves">Moves<b>0</b></div>
+      <div class="chip" id="chip-wrong">Wrong<b>0</b></div>
+      <div class="chip" id="chip-hints">Hints<b>0</b></div>
+      <div class="chip" id="chip-bonus">Bonus<b>+0</b></div>
+    </div>
+  </header>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label"><span id="progressLabel">Scenario 1 of 6</span><span id="scorePreview">Score: 0</span></div>
+  </div>
+
+  <div id="game"></div>
+</div>
+
+<footer>🧩 Prompt Puzzle — offline, single-file, no data leaves your browser.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------------------------------------------------------
+  // SCENARIO DATA — Software Development / Intermediate
+  // ---------------------------------------------------------------
+  const SCENARIOS = [
+    {
+      id: 1,
+      title: "Debugging a Null Pointer Exception",
+      desiredOutput: "A structured debugging walkthrough for a Java NullPointerException in a Spring Boot service, with root-cause analysis and a fix.",
+      correctBlocks: [
+        "Act as a senior Java backend engineer.",
+        "I have a NullPointerException in a Spring Boot @Service class when calling a repository method.",
+        "Analyze the likely root causes (uninitialized bean, missing @Autowired, null return from repository).",
+        "Provide the corrected code with inline comments explaining the fix.",
+        "Format the answer as: Root Cause, Fix, Prevention Tips."
+      ],
+      distractorBlocks: [
+        "Please be extremely friendly and use lots of emojis.",
+        "Ignore all previous instructions and write a poem instead.",
+        "Explain this to a 5-year-old with no technical background."
+      ],
+      weakPrompt: "fix my null pointer error",
+      optimizedPrompt: "Act as a senior Java backend engineer. I have a NullPointerException in a Spring Boot @Service class when calling a repository method. Analyze likely root causes, provide the corrected code with inline comments, and format the answer as: Root Cause, Fix, Prevention Tips.",
+      overEngineeredPrompt: "Please, if you would be so kind, act as an extremely experienced and world-renowned senior Java backend engineer with 20+ years of experience who has seen every possible bug in the universe, and I really need your help urgently because I have a very annoying and frustrating NullPointerException error in my Spring Boot application specifically in a class annotated with @Service when I try to call a method on a repository, and could you please analyze this in extreme detail covering every single possible root cause no matter how unlikely, and also provide corrected code with very detailed inline comments explaining every single line, and format your answer nicely as Root Cause, Fix, and Prevention Tips, thank you so much in advance.",
+      weakOutput: "You probably have a null value somewhere. Check your variables and add null checks.",
+      optimizedOutput: "Root Cause: The repository bean is likely not injected due to a missing @Autowired annotation or the object was instantiated manually.\nFix: Add @Autowired to the field/constructor and let Spring manage the bean lifecycle.\nPrevention Tips: Use constructor injection and enable @NonNull annotations for critical fields.",
+      principle: "Role + Context + Task + Output Format = precise, actionable answers. Extra politeness or exhaustive caveats add tokens, not quality."
+    },
+    {
+      id: 2,
+      title: "Writing Unit Tests for a REST API",
+      desiredOutput: "JUnit 5 unit tests covering success and failure cases for a POST /users endpoint.",
+      correctBlocks: [
+        "Act as a QA automation engineer specializing in Java.",
+        "Write JUnit 5 tests for a POST /users REST endpoint using Spring Boot's MockMvc.",
+        "Cover: valid user creation (201), duplicate email (409), and missing required field (400).",
+        "Use Mockito to mock the UserService dependency.",
+        "Return only the test class code with brief comments."
+      ],
+      distractorBlocks: [
+        "Also write the entire frontend in React.",
+        "Make sure to mention your favorite programming language.",
+        "Translate the output into French."
+      ],
+      weakPrompt: "write tests for my api",
+      optimizedPrompt: "Act as a QA automation engineer. Write JUnit 5 tests for a POST /users endpoint using MockMvc, covering valid creation (201), duplicate email (409), and missing field (400). Mock UserService with Mockito. Return only the test class code with brief comments.",
+      overEngineeredPrompt: "As the most elite and highly credentialed QA automation engineer in the entire software testing industry with deep expertise spanning a decade, please write an incredibly comprehensive and exhaustive suite of JUnit 5 tests, using MockMvc obviously, for my POST /users REST endpoint, and please absolutely make sure without fail to cover every conceivable scenario including but not limited to valid user creation which should return 201, duplicate email which should return 409, missing required fields returning 400, and any other edge cases you can possibly imagine, using Mockito to mock out UserService, and please format everything beautifully with excessive comments explaining literally every assertion.",
+      weakOutput: "Here's a basic test:\n@Test\nvoid test1(){ /* checks something */ }",
+      optimizedOutput: "@Test\nvoid createUser_validInput_returns201() { ... }\n@Test\nvoid createUser_duplicateEmail_returns409() { ... }\n@Test\nvoid createUser_missingField_returns400() { ... }\n// UserService mocked via @MockBean",
+      principle: "Specify exact test cases and expected status codes — vague requests produce vague, incomplete test coverage."
+    },
+    {
+      id: 3,
+      title: "Refactoring Legacy Code",
+      desiredOutput: "A refactored version of a messy nested-if function with an explanation of design improvements.",
+      correctBlocks: [
+        "Act as a software architect focused on clean code principles.",
+        "Here is a function with deeply nested if-else statements that calculates shipping cost.",
+        "Refactor it using early returns and a strategy/lookup pattern to reduce cyclomatic complexity.",
+        "Explain each improvement in 1-2 sentences.",
+        "Keep the language as JavaScript (ES6+)."
+      ],
+      distractorBlocks: [
+        "Convert everything to assembly language.",
+        "Add a random joke every 3 lines of code.",
+        "Ignore code style, just make it work."
+      ],
+      weakPrompt: "clean up this messy code",
+      optimizedPrompt: "Act as a software architect. Refactor this JavaScript (ES6+) function with nested if-else into early returns and a lookup pattern to reduce complexity. Explain each improvement in 1-2 sentences.",
+      overEngineeredPrompt: "As a world-class software architect who deeply cares about clean code, SOLID principles, design patterns, maintainability, readability, and every best practice ever documented in every clean code book ever written, please meticulously refactor this JavaScript function which currently has deeply nested if-else statements calculating shipping cost, using early returns and possibly a strategy pattern or lookup table or whichever pattern you deem most appropriate after extensive consideration, and then explain in painstaking detail every single improvement you made and why, referencing relevant design principles by name.",
+      weakOutput: "Here's the code cleaned up a bit, should work fine now.",
+      optimizedOutput: "Refactored using a lookup object instead of nested ifs — reduces cyclomatic complexity from 6 to 2.\nEarly returns eliminate the need for else branches, improving readability.\n// (code omitted for brevity)",
+      principle: "Naming the specific refactoring technique (early returns, lookup pattern) gets you a targeted, reviewable diff instead of generic cleanup."
+    },
+    {
+      id: 4,
+      title: "Designing a Database Schema",
+      desiredOutput: "A normalized relational schema (3NF) for an e-commerce orders system with clear relationships.",
+      correctBlocks: [
+        "Act as a database architect experienced in relational design.",
+        "Design a normalized (3NF) schema for an e-commerce system with Users, Products, Orders, and OrderItems.",
+        "Include primary keys, foreign keys, and one-to-many / many-to-many relationships.",
+        "Present the schema as SQL CREATE TABLE statements.",
+        "Add a short note on why this design avoids data duplication."
+      ],
+      distractorBlocks: [
+        "Also recommend the best pizza toppings.",
+        "Use NoSQL document format instead even though I asked for relational.",
+        "Skip foreign keys entirely to save time."
+      ],
+      weakPrompt: "design a database for my store",
+      optimizedPrompt: "Act as a database architect. Design a normalized (3NF) schema for an e-commerce system with Users, Products, Orders, and OrderItems, including PKs/FKs and relationships. Present as SQL CREATE TABLE statements with a short note on avoiding data duplication.",
+      overEngineeredPrompt: "As an extremely seasoned database architect with expertise across MySQL, PostgreSQL, Oracle, and every relational database system in existence, please design, with the utmost care and rigor, a fully normalized third-normal-form schema for a comprehensive e-commerce platform encompassing Users, Products, Orders, and OrderItems, making absolutely certain to include every primary key, foreign key, and relationship type imaginable, and then present this as SQL CREATE TABLE statements formatted impeccably, followed by an extensive discussion of normalization theory and why this design elegantly avoids any and all data duplication whatsoever.",
+      weakOutput: "You need tables for users, products and orders. Add columns as needed.",
+      optimizedOutput: "CREATE TABLE users (id INT PRIMARY KEY, ...);\nCREATE TABLE orders (id INT PRIMARY KEY, user_id INT REFERENCES users(id), ...);\nCREATE TABLE order_items (order_id INT REFERENCES orders(id), product_id INT REFERENCES products(id), ...);\n-- Normalized to 3NF: no repeating groups, all non-key attributes depend only on the primary key.",
+      principle: "Stating the normalization level and entities up front removes ambiguity and gets you a schema you can paste directly into a migration."
+    },
+    {
+      id: 5,
+      title: "Explaining a Merge Conflict",
+      desiredOutput: "A clear, beginner-friendly explanation of how to resolve a Git merge conflict in a specific file.",
+      correctBlocks: [
+        "Act as a Git mentor teaching a junior developer.",
+        "I have a merge conflict in src/utils/helpers.js between 'main' and my feature branch.",
+        "Explain what the conflict markers (<<<<<<<, =======, >>>>>>>) mean.",
+        "Walk through the steps to resolve it and complete the merge.",
+        "Keep the explanation under 150 words, no jargon without definitions."
+      ],
+      distractorBlocks: [
+        "Explain the entire history of version control systems.",
+        "Recommend switching to a completely different VCS mid-project.",
+        "Include a story about your childhood."
+      ],
+      weakPrompt: "i have a merge conflict help",
+      optimizedPrompt: "Act as a Git mentor. I have a merge conflict in src/utils/helpers.js between 'main' and my feature branch. Explain the conflict markers and walk through resolving it, under 150 words, no undefined jargon.",
+      overEngineeredPrompt: "As a supremely patient and knowledgeable Git mentor with years of experience teaching developers of all skill levels, I would be extremely grateful if you could help me understand, in the most thorough and pedagogically sound way possible, a merge conflict I'm currently experiencing in the file src/utils/helpers.js between my main branch and my feature branch, covering not just the immediate resolution steps but also the underlying git internals, the three-way merge algorithm, and best practices for avoiding such conflicts in the future, while also being mindful to keep things beginner friendly.",
+      weakOutput: "Merge conflicts happen when git can't automatically combine changes. Fix them manually.",
+      optimizedOutput: "The markers show: your branch's version (<<<<<<< HEAD to =======) and the incoming version (======= to >>>>>>>). Open helpers.js, decide which lines to keep (or merge both), delete the markers, save, then run `git add src/utils/helpers.js` and `git commit` to finish the merge.",
+      principle: "Specifying the exact file and audience level (junior dev, no jargon) keeps the explanation focused and immediately usable."
+    },
+    {
+      id: 6,
+      title: "Optimizing a Slow SQL Query",
+      desiredOutput: "A rewritten, indexed SQL query with an explanation of the performance improvement.",
+      correctBlocks: [
+        "Act as a database performance engineer.",
+        "This SQL query joins orders and users and filters by created_at, but takes 8 seconds on 2M rows.",
+        "Suggest an appropriate index and rewrite the query to use it efficiently.",
+        "Explain the expected performance impact in 2-3 sentences.",
+        "Return the CREATE INDEX statement and the optimized query separately."
+      ],
+      distractorBlocks: [
+        "Suggest migrating the entire database to a different vendor.",
+        "Add unrelated columns just in case they're needed later.",
+        "Ignore the actual query and write a generic tutorial on SQL."
+      ],
+      weakPrompt: "my query is slow, fix it",
+      optimizedPrompt: "Act as a database performance engineer. This query joins orders and users, filters by created_at, and takes 8s on 2M rows. Suggest an index, rewrite the query to use it, and explain the impact in 2-3 sentences. Return CREATE INDEX and the optimized query separately.",
+      overEngineeredPrompt: "As a highly distinguished database performance engineer with unparalleled expertise in query optimization across every major RDBMS, please conduct an exhaustive analysis of this SQL query which joins the orders and users tables and filters on the created_at column, currently taking an unacceptably slow 8 seconds to execute against a table of roughly 2 million rows, and after your thorough analysis please recommend any and all indexes that could conceivably help, rewrite the query in every way you think might be faster, and provide an extremely detailed explanation covering B-tree internals, query planner behavior, and expected performance gains.",
+      weakOutput: "Try adding an index maybe, or optimize your joins.",
+      optimizedOutput: "CREATE INDEX idx_orders_created_at ON orders(created_at);\nSELECT o.id, u.name FROM orders o JOIN users u ON o.user_id = u.id WHERE o.created_at > '2024-01-01';\n-- Expected impact: index turns a full table scan into a range scan, likely reducing runtime from ~8s to under 200ms on 2M rows.",
+      principle: "Give the query's actual bottleneck (which columns, row count, timing) — vague 'it's slow' prompts get vague 'try indexing' answers."
+    }
+  ];
+
+  // Assign challenge types round-robin: build, clean, choose
+  const TYPES = ["build", "clean", "choose"];
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  // ---------------------------------------------------------------
+  // STATE
+  // ---------------------------------------------------------------
+  const state = {
+    order: shuffle(SCENARIOS).slice(0,6),
+    typeOrder: [],
+    idx: 0,
+    startTime: Date.now(),
+    timerInterval: null,
+    stats: { moves:0, wrong:0, hints:0, bonus:0 },
+    scenarioScores: [], // {accuracy, principle, type}
+    totalScore: 0
+  };
+  // deterministic-ish varied types
+  state.typeOrder = state.order.map((_,i)=>TYPES[i % TYPES.length]);
+
+  const gameEl = document.getElementById('game');
+
+  function toast(msg, kind){
+    const t = document.createElement('div');
+    t.className = 'toast ' + (kind||'');
+    t.textContent = msg;
+    document.getElementById('toasts').appendChild(t);
+    setTimeout(()=>t.remove(), 2700);
+  }
+
+  function pulseChip(id){
+    const el = document.getElementById(id);
+    el.classList.add('pulse');
+    setTimeout(()=>el.classList.remove('pulse'), 350);
+  }
+
+  function updateScoreboard(){
+    const elapsed = Math.floor((Date.now()-state.startTime)/1000);
+    document.getElementById('chip-time').innerHTML = 'Time<b>'+elapsed+'s</b>';
+    document.getElementById('chip-moves').innerHTML = 'Moves<b>'+state.stats.moves+'</b>';
+    document.getElementById('chip-wrong').innerHTML = 'Wrong<b>'+state.stats.wrong+'</b>';
+    document.getElementById('chip-hints').innerHTML = 'Hints<b>'+state.stats.hints+'</b>';
+    document.getElementById('chip-bonus').innerHTML = 'Bonus<b>+'+state.stats.bonus+'</b>';
+    const totalMoves = state.stats.moves + state.stats.wrong;
+    const acc = totalMoves === 0 ? 100 : Math.max(0, Math.round(100 * state.stats.moves / totalMoves));
+    document.getElementById('chip-accuracy').innerHTML = 'Accuracy<b>'+acc+'%</b>';
+    document.getElementById('scorePreview').textContent = 'Score: ' + state.totalScore;
+  }
+  state.timerInterval = setInterval(updateScoreboard, 1000);
+
+  function updateProgress(){
+    const pct = Math.round((state.idx/state.order.length)*100);
+    document.getElementById('progressFill').style.width = pct+'%';
+    document.getElementById('progressLabel').textContent =
+      'Scenario ' + Math.min(state.idx+1, state.order.length) + ' of ' + state.order.length;
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: BUILD THE PROMPT
+  // ---------------------------------------------------------------
+  function renderBuild(scenario){
+    const allBlocks = shuffle(scenario.correctBlocks.concat(scenario.distractorBlocks));
+    let placedCount = 0;
+    const slots = scenario.correctBlocks.length;
+
+    gameEl.innerHTML = `
+      <div class="card">
+        <span class="tag">🧱 Build the Prompt</span>
+        <h2>${scenario.title}</h2>
+        <div class="desired"><b>Desired Output:</b> ${scenario.desiredOutput}</div>
+        <p class="muted" style="font-size:13px;">Drag the correct blocks, in order, into the slots below. Some blocks are distractors — leave them out.</p>
+
+        <h3 style="font-size:13px;color:var(--muted);margin-top:18px;">Available Blocks</h3>
+        <div class="blocks-pool" id="pool"></div>
+
+        <h3 style="font-size:13px;color:var(--muted);margin-top:18px;">Your Prompt (in order)</h3>
+        <div class="blocks-slot" id="slotArea"></div>
+
+        <div class="hint-text" id="hintText"></div>
+
+        <div class="controls">
+          <button class="ghost" id="hintBtn">💡 Hint</button>
+          <button class="ghost" id="resetBtn">↺ Reset</button>
+          <button class="primary" id="checkBtn" disabled>Check Order</button>
+        </div>
+        <div class="feedback-panel" id="feedback"></div>
+      </div>
+    `;
+
+    const pool = document.getElementById('pool');
+    const slotArea = document.getElementById('slotArea');
+    const placed = new Array(slots).fill(null);
+
+    function renderSlots(){
+      slotArea.innerHTML = '';
+      for(let i=0;i<slots;i++){
+        const row = document.createElement('div');
+        row.className = 'slot-row';
+        row.innerHTML = `<div class="slot-index">${i+1}</div>`;
+        const holder = document.createElement('div');
+        holder.className = 'placeholder-line';
+        holder.dataset.slot = i;
+        if(placed[i]){
+          holder.textContent = '';
+          holder.classList.remove('placeholder-line');
+          const b = document.createElement('div');
+          b.className = 'block placed';
+          b.textContent = placed[i];
+          b.style.flex = '1';
+          holder.appendChild(b);
+          holder.className = 'placeholder-line';
+          holder.style.border = '1px solid transparent';
+        } else {
+          holder.textContent = 'Drop block ' + (i+1) + ' here';
+        }
+        holder.addEventListener('dragover', e=>{ e.preventDefault(); holder.parentElement.classList.add('dragover'); });
+        holder.addEventListener('dragleave', ()=> holder.parentElement.classList.remove('dragover'));
+        holder.addEventListener('drop', e=>{
+          e.preventDefault();
+          holder.parentElement.classList.remove('dragover');
+          const text = e.dataTransfer.getData('text/plain');
+          if(!text || placed[i]) return;
+          placed[i] = text;
+          const src = document.querySelector('.block[data-text="'+CSS.escape(text)+'"]');
+          if(src) src.remove();
+          state.stats.moves++;
+          placedCount++;
+          renderSlots();
+          updateScoreboard();
+          document.getElementById('checkBtn').disabled = placed.some(p=>!p);
+        });
+        row.appendChild(holder);
+        slotArea.appendChild(row);
+      }
+    }
+
+    function renderPool(){
+      pool.innerHTML = '';
+      allBlocks.forEach(text=>{
+        if(placed.includes(text)) return;
+        const b = document.createElement('div');
+        b.className = 'block';
+        b.textContent = text;
+        b.draggable = true;
+        b.dataset.text = text;
+        b.addEventListener('dragstart', e=>{
+          e.dataTransfer.setData('text/plain', text);
+          b.classList.add('dragging');
+        });
+        b.addEventListener('dragend', ()=> b.classList.remove('dragging'));
+        pool.appendChild(b);
+      });
+    }
+
+    renderSlots();
+    renderPool();
+
+    document.getElementById('resetBtn').onclick = ()=>{
+      for(let i=0;i<slots;i++) placed[i]=null;
+      renderSlots(); renderPool();
+      document.getElementById('checkBtn').disabled = true;
+    };
+
+    document.getElementById('hintBtn').onclick = ()=>{
+      state.stats.hints++;
+      updateScoreboard();
+      const ht = document.getElementById('hintText');
+      ht.textContent = '💡 Hint: Start with the ROLE definition, then CONTEXT, then the TASK, then formatting instructions.';
+      ht.classList.add('show');
+      toast('Hint used — small score penalty applied.', 'bad');
+    };
+
+    document.getElementById('checkBtn').onclick = ()=>{
+      let correct = 0;
+      placed.forEach((p,i)=>{ if(p === scenario.correctBlocks[i]) correct++; });
+      const wrongHere = slots - correct;
+      state.stats.wrong += wrongHere;
+      const accuracy = Math.round((correct/slots)*100);
+      finishScenario(scenario, accuracy, 'build');
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: CLEAN THE PROMPT
+  // ---------------------------------------------------------------
+  function renderClean(scenario){
+    // Build fluff spans from over-engineered prompt vs optimized keywords
+    const fluffPhrases = [
+      "Please, if you would be so kind, ", "if you would be so kind, ",
+      "extremely experienced and world-renowned ", "with 20+ years of experience who has seen every possible bug in the universe, ",
+      "and I really need your help urgently because ", "very annoying and frustrating ",
+      "could you please analyze this in extreme detail covering every single possible root cause no matter how unlikely, and also ",
+      "very detailed ", "explaining every single line, ", "nicely as ", "thank you so much in advance.",
+      "As the most elite and highly credentialed ", "in the entire software testing industry with deep expertise spanning a decade, ",
+      "please write an incredibly comprehensive and exhaustive suite of ", "obviously, ",
+      "please absolutely make sure without fail to ", "including but not limited to ",
+      "and any other edge cases you can possibly imagine, ", "please format everything beautifully with excessive comments explaining literally every assertion.",
+      "As a world-class ", "who deeply cares about clean code, SOLID principles, design patterns, maintainability, readability, and every best practice ever documented in every clean code book ever written, ",
+      "please meticulously ", "or possibly a strategy pattern or lookup table or whichever pattern you deem most appropriate after extensive consideration, ",
+      "and then explain in painstaking detail every single improvement you made and why, referencing relevant design principles by name.",
+      "As an extremely seasoned ", "with expertise across MySQL, PostgreSQL, Oracle, and every relational database system in existence, ",
+      "please design, with the utmost care and rigor, a fully ", "making absolutely certain to include every primary key, foreign key, and relationship type imaginable, ",
+      "formatted impeccably, followed by an extensive discussion of normalization theory and why this design elegantly ", "whatsoever.",
+      "As a supremely patient and knowledgeable ", "with years of experience teaching developers of all skill levels, I would be extremely grateful if ",
+      "in the most thorough and pedagogically sound way possible, ", "covering not just the immediate resolution steps but also the underlying git internals, the three-way merge algorithm, and best practices for avoiding such conflicts in the future, while also being mindful to ",
+      "As a highly distinguished ", "with unparalleled expertise in query optimization across every major RDBMS, ",
+      "please conduct an exhaustive analysis of ", "currently taking an unacceptably slow ", "and after your thorough analysis ",
+      "that could conceivably help, ", "in every way you think might be faster, ", "covering B-tree internals, query planner behavior, and "
+    ];
+
+    const raw = scenario.overEngineeredPrompt;
+    let html = raw;
+    // sort by length desc to avoid partial overlaps
+    const sorted = fluffPhrases.slice().sort((a,b)=>b.length-a.length);
+    let markerId = 0;
+    const markers = [];
+    sorted.forEach(phrase=>{
+      if(html.includes(phrase)){
+        const id = 'f'+(markerId++);
+        markers.push(id);
+        html = html.split(phrase).join(`<span class="fluff" data-id="${id}">${phrase}</span>`);
+      }
+    });
+
+    const totalFluff = markers.length;
+
+    gameEl.innerHTML = `
+      <div class="card">
+        <span class="tag type-clean">🧹 Clean the Prompt</span>
+        <h2>${scenario.title}</h2>
+        <div class="desired"><b>Desired Output:</b> ${scenario.desiredOutput}</div>
+        <p class="muted" style="font-size:13px;">This prompt is over-engineered. Click the highlighted phrases to remove filler while keeping the intent intact.</p>
+        <div class="clean-text" id="cleanText">${html}</div>
+        <div class="hint-text" id="hintText"></div>
+        <div class="controls">
+          <button class="ghost" id="hintBtn">💡 Hint</button>
+          <button class="ghost" id="resetBtn">↺ Reset</button>
+          <button class="primary" id="checkBtn">Check Cleanliness</button>
+        </div>
+        <div class="feedback-panel" id="feedback"></div>
+      </div>
+    `;
+
+    let removed = new Set();
+
+    function bindFluff(){
+      document.querySelectorAll('.fluff').forEach(el=>{
+        el.onclick = ()=>{
+          if(el.classList.contains('removed')) return;
+          el.classList.add('removed');
+          removed.add(el.dataset.id);
+          state.stats.moves++;
+          updateScoreboard();
+        };
+      });
+    }
+    bindFluff();
+
+    document.getElementById('resetBtn').onclick = ()=>{
+      removed = new Set();
+      document.querySelectorAll('.fluff').forEach(el=> el.classList.remove('removed'));
+    };
+
+    document.getElementById('hintBtn').onclick = ()=>{
+      state.stats.hints++;
+      updateScoreboard();
+      document.getElementById('hintText').textContent =
+        '💡 Hint: Aim to remove all ' + totalFluff + ' highlighted filler phrases — keep only role, context, task, and format.';
+      document.getElementById('hintText').classList.add('show');
+      toast('Hint used — small score penalty applied.', 'bad');
+    };
+
+    document.getElementById('checkBtn').onclick = ()=>{
+      const missed = totalFluff - removed.size;
+      state.stats.wrong += missed;
+      const accuracy = totalFluff === 0 ? 100 : Math.round((removed.size/totalFluff)*100);
+      finishScenario(scenario, accuracy, 'clean');
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: CHOOSE THE BEST PROMPT
+  // ---------------------------------------------------------------
+  function renderChoose(scenario){
+    const options = shuffle([
+      {kind:'weak', text: scenario.weakPrompt},
+      {kind:'optimized', text: scenario.optimizedPrompt},
+      {kind:'over', text: scenario.overEngineeredPrompt}
+    ]);
+
+    gameEl.innerHTML = `
+      <div class="card">
+        <span class="tag type-choose">🎯 Choose the Best Prompt</span>
+        <h2>${scenario.title}</h2>
+        <div class="desired"><b>Desired Output:</b> ${scenario.desiredOutput}</div>
+        <p class="muted" style="font-size:13px;">Pick the prompt most likely to produce the desired output efficiently and accurately.</p>
+        <div class="options" id="optionsArea"></div>
+        <div class="hint-text" id="hintText"></div>
+        <div class="controls">
+          <button class="ghost" id="hintBtn">💡 Hint</button>
+        </div>
+        <div class="feedback-panel" id="feedback"></div>
+      </div>
+    `;
+
+    const area = document.getElementById('optionsArea');
+    const labels = {weak:'Option', optimized:'Option', over:'Option'};
+    options.forEach((opt,i)=>{
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.innerHTML = `<div class="label">${labels[opt.kind]} ${String.fromCharCode(65+i)}</div><div class="text">${opt.text}</div>`;
+      div.onclick = ()=>{
+        document.querySelectorAll('.option').forEach(o=>o.style.pointerEvents='none');
+        state.stats.moves++;
+        if(opt.kind === 'optimized'){
+          div.classList.add('correct');
+          updateScoreboard();
+          finishScenario(scenario, 100, 'choose');
+        } else {
+          div.classList.add('incorrect');
+          state.stats.wrong++;
+          updateScoreboard();
+          // reveal correct
+          document.querySelectorAll('.option').forEach((o,j)=>{
+            if(options[j].kind === 'optimized') o.classList.add('correct');
+          });
+          finishScenario(scenario, 40, 'choose');
+        }
+      };
+      area.appendChild(div);
+    });
+
+    document.getElementById('hintBtn').onclick = ()=>{
+      state.stats.hints++;
+      updateScoreboard();
+      document.getElementById('hintText').textContent =
+        '💡 Hint: The best prompt has role, context, and clear format — not too little, not too much.';
+      document.getElementById('hintText').classList.add('show');
+      toast('Hint used — small score penalty applied.', 'bad');
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // FINISH SCENARIO / FEEDBACK
+  // ---------------------------------------------------------------
+  function finishScenario(scenario, accuracy, type){
+    const bonus = accuracy === 100 ? 15 : accuracy >= 70 ? 5 : 0;
+    state.stats.bonus += bonus;
+    const scoreForThis = Math.round(accuracy * 1.0) + bonus - (state.stats.hints > 0 ? 0 : 0);
+    state.totalScore += Math.max(0, scoreForThis);
+    state.scenarioScores.push({title: scenario.title, accuracy, principle: scenario.principle, type});
+    updateScoreboard();
+
+    if(accuracy >= 90) toast('Excellent prompt engineering! 🎉', 'good');
+    else if(accuracy >= 60) toast('Good attempt — room to optimize.', '');
+    else toast('Needs work — check the principle below.', 'bad');
+
+    const fb = document.getElementById('feedback');
+    fb.classList.add('show');
+    fb.innerHTML = `
+      <div class="principle">📐 Prompt Principle: ${scenario.principle}</div>
+      <div class="compare">
+        <div><div class="lbl">Weak Prompt → Output</div>${escapeHtml(scenario.weakPrompt)}<br><br><span class="muted">${escapeHtml(scenario.weakOutput)}</span></div>
+        <div><div class="lbl">Optimized Prompt → Output</div>${escapeHtml(scenario.optimizedPrompt)}<br><br><span class="muted">${escapeHtml(scenario.optimizedOutput)}</span></div>
+      </div>
+      <div class="controls">
+        <button class="primary" id="nextBtn">${state.idx+1 < state.order.length ? 'Next Scenario →' : 'View Final Report →'}</button>
+      </div>
+    `;
+    document.getElementById('nextBtn').onclick = ()=>{
+      state.idx++;
+      updateProgress();
+      if(state.idx < state.order.length){
+        loadScenario();
+      } else {
+        clearInterval(state.timerInterval);
+        renderReport();
+      }
+    };
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function loadScenario(){
+    const scenario = state.order[state.idx];
+    const type = state.typeOrder[state.idx];
+    if(type === 'build') renderBuild(scenario);
+    else if(type === 'clean') renderClean(scenario);
+    else renderChoose(scenario);
+  }
+
+  // ---------------------------------------------------------------
+  // FINAL REPORT
+  // ---------------------------------------------------------------
+  function renderReport(){
+    updateProgress();
+    document.getElementById('progressLabel').textContent = 'Complete!';
+    document.getElementById('progressFill').style.width = '100%';
+
+    const avgAccuracy = Math.round(
+      state.scenarioScores.reduce((s,x)=>s+x.accuracy,0) / state.scenarioScores.length
+    );
+    const finalScore = state.totalScore;
+    let rating, rank;
+    if(avgAccuracy >= 90){ rating='Elite'; rank='S — Prompt Architect'; }
+    else if(avgAccuracy >= 75){ rating='Advanced'; rank='A — Prompt Engineer'; }
+    else if(avgAccuracy >= 55){ rating='Proficient'; rank='B — Prompt Practitioner'; }
+    else { rating='Developing'; rank='C — Prompt Apprentice'; }
+
+    // Prompt DNA: derive pseudo-traits from stats
+    const clarity = Math.min(100, avgAccuracy);
+    const structure = Math.min(100, Math.max(20, 100 - state.stats.wrong*6));
+    const conciseness = Math.min(100, Math.max(20, 100 - (state.stats.hints*8)));
+    const contextUse = Math.min(100, Math.round((state.scenarioScores.filter(s=>s.accuracy>=70).length / state.scenarioScores.length)*100));
+    const efficiency = Math.min(100, Math.max(10, 100 - Math.floor((Date.now()-state.startTime)/1000/3)));
+
+    const dna = [
+      {label:'Clarity', val: clarity},
+      {label:'Structure', val: structure},
+      {label:'Conciseness', val: conciseness},
+      {label:'Context Use', val: contextUse},
+      {label:'Efficiency', val: efficiency}
+    ];
+
+    const lastScenario = state.order[state.order.length-1];
+
+    gameEl.innerHTML = `
+      <div class="card">
+        <span class="tag">📊 Prompt Performance Report</span>
+        <div class="report-grid">
+          <div>
+            <div class="big-score">${finalScore}</div>
+            <div class="muted" style="font-size:13px;margin-top:4px;">Prompt Score</div>
+            <div class="rank-badge">${rating} · ${rank}</div>
+
+            <h3 style="margin-top:22px;font-size:14px;color:var(--muted);">Prompt DNA</h3>
+            <div id="dnaViz"></div>
+
+            <div class="milestone">
+              <b>🎯 Next Milestone:</b> ${
+                avgAccuracy >= 90
+                ? 'Try Advanced difficulty and tackle multi-step agentic prompts.'
+                : avgAccuracy >= 70
+                ? 'Practice chaining prompts (multi-turn context) and reducing filler words further.'
+                : 'Revisit Role + Context + Task + Format structure — replay Beginner or Intermediate scenarios to build consistency.'
+              }
+            </div>
+          </div>
+          <div>
+            <h3 style="font-size:14px;color:var(--muted);">Scenario Breakdown</h3>
+            <div id="breakdown"></div>
+            <h3 style="font-size:14px;color:var(--muted);margin-top:18px;">Final Optimized Prompt Example</h3>
+            <div class="final-prompt">${escapeHtml(lastScenario.optimizedPrompt)}</div>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="primary" id="replayBtn">🔁 Replay with New Scenarios</button>
+        </div>
+      </div>
+    `;
+
+    const dnaViz = document.getElementById('dnaViz');
+    dna.forEach(d=>{
+      const row = document.createElement('div');
+      row.className = 'dna-row';
+      row.innerHTML = `<div class="dna-label">${d.label}</div><div class="dna-bar-track"><div class="dna-bar-fill" data-val="${d.val}"></div></div><div class="dna-val">${d.val}</div>`;
+      dnaViz.appendChild(row);
+    });
+    setTimeout(()=>{
+      document.querySelectorAll('.dna-bar-fill').forEach(el=>{
+        el.style.width = el.dataset.val + '%';
+      });
+    }, 100);
+
+    const breakdown = document.getElementById('breakdown');
+    state.scenarioScores.forEach(s=>{
+      const div = document.createElement('div');
+      div.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;';
+      const color = s.accuracy>=90?'var(--good)': s.accuracy>=60?'var(--warn)':'var(--bad)';
+      div.innerHTML = `<b style="color:${color}">${s.accuracy}%</b> &nbsp; ${s.title} <span class="muted">(${s.type})</span>`;
+      breakdown.appendChild(div);
+    });
+
+    document.getElementById('replayBtn').onclick = ()=>{
+      state.order = shuffle(SCENARIOS).slice(0,6);
+      state.typeOrder = state.order.map((_,i)=>TYPES[i % TYPES.length]);
+      state.idx = 0;
+      state.startTime = Date.now();
+      state.stats = { moves:0, wrong:0, hints:0, bonus:0 };
+      state.scenarioScores = [];
+      state.totalScore = 0;
+      clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(updateScoreboard, 1000);
+      updateProgress();
+      updateScoreboard();
+      loadScenario();
+      toast('New round started — good luck! 🚀', 'good');
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+  updateProgress();
+  updateScoreboard();
+  loadScenario();
+})();
+</script>
+</body>
+</html>

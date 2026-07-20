@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Compass — Café Edition</title>
+<style>
+  :root{
+    --cream:#FFF8F2;
+    --vanilla:#FFFDF8;
+    --coffee:#8B5E3C;
+    --mocha:#A47551;
+    --blush:#F8D9D6;
+    --dusty:#E9C6C3;
+    --peach:#FFDCC8;
+    --latte:#EFDCCB;
+    --butter:#FFF0C7;
+    --sage:#DDE8D6;
+    --ink:#5B4033;
+    --shadow: 0 10px 30px rgba(139,94,60,0.14);
+    --shadow-soft: 0 4px 14px rgba(139,94,60,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: 'Georgia', 'Iowan Old Style', serif;
+    background: linear-gradient(160deg, var(--cream) 0%, var(--latte) 45%, var(--peach) 100%);
+    color: var(--ink);
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+  ::selection{ background: var(--blush); }
+
+  /* ---------- Floating ambience ---------- */
+  .ambience{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .bean, .leaf, .sparkle{ position:absolute; opacity:0.55; animation: drift linear infinite; }
+  .bean{ width:14px; height:20px; background: var(--mocha); border-radius:50% 50% 50% 50% / 60% 60% 40% 40%; }
+  .bean::after{ content:''; position:absolute; top:2px; bottom:2px; left:50%; width:1.5px; background: var(--coffee); }
+  .leaf{ width:16px; height:16px; background: var(--sage); border-radius: 0 60% 0 60%; }
+  .sparkle{ width:6px; height:6px; background: var(--butter); border-radius:50%; box-shadow:0 0 8px var(--butter); }
+  @keyframes drift{
+    0%{ transform: translateY(110vh) translateX(0) rotate(0deg); opacity:0; }
+    10%{ opacity:0.6; }
+    90%{ opacity:0.5; }
+    100%{ transform: translateY(-10vh) translateX(40px) rotate(220deg); opacity:0; }
+  }
+
+  .steam-wrap{ position:relative; width:40px; height:60px; margin:0 auto; }
+  .steam{ position:absolute; bottom:0; width:6px; height:6px; border-radius:50%; background:rgba(139,94,60,0.25); filter: blur(2px); animation: rise 3.2s ease-in infinite; }
+  .steam:nth-child(2){ left:12px; animation-delay:0.7s; }
+  .steam:nth-child(3){ left:24px; animation-delay:1.4s; }
+  @keyframes rise{
+    0%{ transform: translateY(0) scale(1); opacity:0; }
+    20%{ opacity:0.7; }
+    100%{ transform: translateY(-55px) scale(2.2); opacity:0; }
+  }
+
+  .app{ position:relative; z-index:1; max-width:980px; margin:0 auto; padding:32px 20px 80px; }
+
+  header.hero{ text-align:center; margin-bottom:34px; }
+  .brand-mark{ font-size:12px; letter-spacing:4px; text-transform:uppercase; color:var(--mocha); font-family: 'Helvetica Neue', Arial, sans-serif; }
+  h1.title{ font-size:44px; margin:8px 0 4px; color:var(--coffee); font-weight:700; letter-spacing:0.5px; }
+  p.subtitle{ font-family:'Helvetica Neue', Arial, sans-serif; font-style: italic; color:var(--mocha); font-size:16px; margin:0; }
+
+  .progress-track{ display:flex; justify-content:center; gap:10px; margin-top:22px; }
+  .progress-dot{ width:34px; height:6px; border-radius:6px; background: rgba(139,94,60,0.18); transition: all .4s ease; }
+  .progress-dot.active{ background: linear-gradient(90deg, var(--mocha), var(--coffee)); }
+  .progress-dot.done{ background: var(--sage); }
+
+  /* ---------- Glass card ---------- */
+  .card{
+    background: rgba(255,253,248,0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 26px;
+    box-shadow: var(--shadow);
+    padding: 30px;
+    margin-bottom: 24px;
+    animation: fadeUp .5s ease both;
+  }
+  @keyframes fadeUp{ from{ opacity:0; transform: translateY(16px);} to{opacity:1; transform:translateY(0);} }
+
+  .stage-eyebrow{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--mocha); margin-bottom:6px; }
+  .stage-title{ font-size:26px; color:var(--coffee); margin:0 0 6px; }
+  .stage-desc{ font-family:'Helvetica Neue',Arial,sans-serif; color:#7a6350; font-size:15px; margin-bottom:22px; line-height:1.5; }
+
+  /* Ticket-style task card */
+  .ticket{
+    background: linear-gradient(135deg, var(--vanilla), var(--cream));
+    border: 2px dashed var(--dusty);
+    border-radius: 18px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .ticket::before, .ticket::after{
+    content:''; position:absolute; width:18px; height:18px; background:var(--app-bg,var(--cream));
+    border-radius:50%; top:50%; transform:translateY(-50%);
+    background: linear-gradient(160deg, var(--cream) 0%, var(--latte) 45%, var(--peach) 100%);
+  }
+  .ticket::before{ left:-9px; }
+  .ticket::after{ right:-9px; }
+  .ticket-q{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; text-transform:uppercase; letter-spacing:2px; color:var(--mocha); margin-bottom:6px; }
+  .ticket-text{ font-size:18px; color: var(--ink); font-weight:600; }
+
+  /* Drop zone */
+  .dropzone{
+    margin-top:14px; min-height:64px; border-radius:16px;
+    border:2px dashed var(--mocha); background: rgba(248,217,214,0.25);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-family:'Helvetica Neue',Arial,sans-serif; color: var(--mocha); font-size:14px;
+    transition: all .25s ease; flex-wrap:wrap; padding:10px;
+  }
+  .dropzone.dragover{ background: rgba(255,220,200,0.55); border-color: var(--coffee); transform: scale(1.02); }
+  .dropzone.filled{ border-style:solid; border-color: var(--sage); background: rgba(221,232,214,0.4); }
+  .dropzone.wrong{ border-color:#d98080; background: rgba(217,128,128,0.12); }
+
+  /* role chips */
+  .role-pool{ display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+  .chip{
+    padding:9px 18px; border-radius:999px; cursor:grab; user-select:none;
+    background: linear-gradient(135deg, var(--butter), var(--peach));
+    color: var(--ink); font-family:'Helvetica Neue',Arial,sans-serif; font-size:14px; font-weight:600;
+    box-shadow: var(--shadow-soft); border: 1px solid rgba(255,255,255,0.6);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .chip:hover{ transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 18px rgba(139,94,60,0.2); }
+  .chip.selected{ outline:2px solid var(--coffee); }
+  .chip.placed{ opacity:0.35; cursor:default; pointer-events:none; }
+  .chip-inzone{ background: linear-gradient(135deg, var(--sage), var(--blush)); cursor:pointer; }
+
+  .hint-tap{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; color:#a08a76; margin-top:6px; }
+
+  /* Feedback box */
+  .feedback{ margin-top:16px; padding:16px 18px; border-radius:16px; background: rgba(221,232,214,0.4); border:1px solid var(--sage); animation: fadeUp .4s ease both; font-family:'Helvetica Neue',Arial,sans-serif; font-size:14px; line-height:1.6; }
+  .feedback.incorrect{ background: rgba(248,217,214,0.5); border-color: var(--dusty); }
+  .feedback b{ color: var(--coffee); }
+
+  /* buttons */
+  .btn-row{ display:flex; justify-content:flex-end; gap:12px; margin-top:24px; }
+  .pill-btn{
+    font-family:'Helvetica Neue',Arial,sans-serif; font-weight:700; font-size:14px;
+    padding:12px 28px; border-radius:999px; border:none; cursor:pointer;
+    background: linear-gradient(135deg, var(--coffee), var(--mocha)); color: var(--vanilla);
+    box-shadow: var(--shadow-soft); transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .pill-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .pill-btn:not(:disabled):hover{ transform: translateY(-2px); box-shadow: var(--shadow); }
+  .pill-btn.secondary{ background: transparent; color:var(--coffee); border:2px solid var(--dusty); }
+
+  /* Sequence slots (stage 2) */
+  .sequence{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+  .slot{
+    flex:1; min-width:120px; min-height:70px; border-radius:14px; border:2px dashed var(--mocha);
+    background: rgba(255,253,248,0.6); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:8px; text-align:center; position:relative;
+  }
+  .slot .slot-label{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:11px; color:#a08a76; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+  .arrow{ font-size:20px; color: var(--mocha); }
+  .ticket-mini{
+    position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+    width:26px; height:26px; border-radius:50%; background: var(--butter); box-shadow: var(--shadow-soft);
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+    animation: floaty 2.2s ease-in-out infinite;
+    opacity:0; transition:opacity .3s ease;
+  }
+  .slot.animating .ticket-mini{ opacity:1; }
+  @keyframes floaty{ 0%,100%{ transform: translateX(-50%) translateY(0);} 50%{ transform: translateX(-50%) translateY(-6px);} }
+
+  /* Team cards stage 3 */
+  .team-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-top:16px; }
+  .team-card{
+    border-radius:16px; padding:14px; text-align:center; cursor:pointer;
+    background: linear-gradient(135deg, var(--vanilla), var(--latte)); border:2px solid transparent;
+    font-family:'Helvetica Neue',Arial,sans-serif; font-weight:600; color:var(--ink); font-size:14px;
+    transition: all .2s ease; box-shadow: var(--shadow-soft);
+  }
+  .team-card:hover{ transform: translateY(-3px); }
+  .team-card.primary{ border-color: var(--coffee); background: linear-gradient(135deg, var(--peach), var(--butter)); }
+  .team-card.supporting{ border-color: var(--sage); background: rgba(221,232,214,0.5); }
+  .role-toggle{ font-size:11px; margin-top:6px; color:#a08a76; }
+
+  .assign-controls{ display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .mode-btn{
+    font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; padding:7px 16px; border-radius:999px;
+    border:1px solid var(--mocha); background:transparent; color:var(--mocha); cursor:pointer; font-weight:700;
+  }
+  .mode-btn.active-primary{ background: var(--coffee); color:var(--vanilla); border-color:var(--coffee); }
+  .mode-btn.active-support{ background: var(--sage); color:var(--ink); border-color:var(--sage); }
+
+  .flow-note{ margin-top:14px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; color:#7a6350; background: rgba(255,240,199,0.4); border-radius:12px; padding:10px 14px; }
+
+  /* Dashboard */
+  .dash-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:20px; margin-top:20px; }
+  .metric{ text-align:center; }
+  .metric-label{ font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:var(--mocha); margin-bottom:10px; }
+  .ring{ width:130px; height:130px; margin:0 auto; position:relative; }
+  .ring svg{ transform: rotate(-90deg); width:100%; height:100%; }
+  .ring circle{ fill:none; stroke-width:12; }
+  .ring .bg{ stroke: rgba(139,94,60,0.12); }
+  .ring .fg{ stroke-linecap:round; transition: stroke-dashoffset 1.4s cubic-bezier(.22,1,.36,1); }
+  .ring-value{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:var(--coffee); }
+
+  .reflection-block{ margin-top:8px; }
+  .reflection-item{ display:flex; gap:12px; margin-bottom:16px; align-items:flex-start; }
+  .reflection-icon{ font-size:22px; }
+  .reflection-item h4{ margin:0 0 4px; color:var(--coffee); font-size:15px; }
+  .reflection-item p{ margin:0; font-family:'Helvetica Neue',Arial,sans-serif; font-size:14px; color:#6b5644; line-height:1.6; }
+
+  footer.app-footer{ text-align:center; margin-top:30px; font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; color:#a08a76; }
+
+  /* confetti */
+  .confetti-piece{ position:fixed; top:-20px; z-index:999; border-radius:3px; pointer-events:none; animation: confetti-fall linear forwards; }
+  @keyframes confetti-fall{
+    to{ transform: translateY(110vh) rotate(540deg); opacity:0.3; }
+  }
+
+  @media (max-width:640px){
+    h1.title{ font-size:32px; }
+    .card{ padding:20px; }
+    .sequence{ flex-direction:column; }
+    .arrow{ transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambience" id="ambience"></div>
+
+<div class="app">
+  <header class="hero">
+    <div class="brand-mark">☕ Task Compass</div>
+    <h1 class="title">Café Edition</h1>
+    <p class="subtitle">Learn how work flows through real organizations.</p>
+    <div class="progress-track" id="progressTrack"></div>
+  </header>
+
+  <div id="stageContainer"></div>
+
+  <footer class="app-footer">Brewed with care — a Task Compass learning experience</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ AMBIENT FLOATERS ============ */
+  const ambience = document.getElementById('ambience');
+  const floaterTypes = ['bean','leaf','sparkle'];
+  for(let i=0;i<18;i++){
+    const el = document.createElement('div');
+    const type = floaterTypes[i % floaterTypes.length];
+    el.className = type;
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.animationDuration = (10 + Math.random()*10) + 's';
+    el.style.animationDelay = (Math.random()*10) + 's';
+    ambience.appendChild(el);
+  }
+
+  /* ============ DATA ============ */
+  const ROLES = ["Barista","Shift Manager","Head Chef","Inventory Manager","Cashier","Café Owner","Marketing Lead","Cleaner"];
+
+  const stage1Questions = [
+    {
+      text: "A customer complains their oat-milk latte tastes wrong.",
+      correct: "Barista",
+      assistants: ["Shift Manager"],
+      reasoning: "The Barista made the drink and is closest to the problem — they can taste-test and remake it immediately. The Shift Manager steps in only if the customer stays unhappy, offering a refund or replacement."
+    },
+    {
+      text: "The café is running low on coffee beans for next week.",
+      correct: "Inventory Manager",
+      assistants: ["Café Owner"],
+      reasoning: "Stock levels are the Inventory Manager's job — they track usage and reorder before shortages happen. The Owner is looped in only for budget approval on larger orders."
+    },
+    {
+      text: "A new seasonal pastry recipe needs to be tested before launch.",
+      correct: "Head Chef",
+      assistants: ["Barista"],
+      reasoning: "Recipe development belongs to the Head Chef, who understands ingredients, taste balance, and kitchen feasibility. Baristas assist by test-pairing the pastry with drinks."
+    }
+  ];
+
+  const stage2Questions = [
+    {
+      text: "A customer places an order at the counter — walk it through to completion.",
+      slots: ["Cashier","Barista","Shift Manager"],
+      slotLabels: ["Takes Order","Prepares Drink","Quality Check"],
+      explanation: "The Cashier captures the order accurately, the Barista prepares it to spec, and the Shift Manager spot-checks quality before it reaches the customer — a simple three-step relay that keeps errors low."
+    },
+    {
+      text: "The café bar is running low on milk mid-shift — route the restock request.",
+      slots: ["Barista","Shift Manager","Inventory Manager"],
+      slotLabels: ["Flags Shortage","Approves Request","Places Order"],
+      explanation: "The Barista notices the shortage first-hand, the Shift Manager approves an urgent request, and the Inventory Manager executes the actual order — each role adds a check before money or stock moves."
+    },
+    {
+      text: "A customer complaint about slow service needs to be resolved.",
+      slots: ["Cashier","Shift Manager","Café Owner"],
+      slotLabels: ["Receives Complaint","Resolves Issue","Reviews Pattern"],
+      explanation: "Front-line staff hear complaints first. The Shift Manager has authority to offer solutions on the spot. The Owner only gets involved if complaints repeat, to fix root causes like staffing or process."
+    }
+  ];
+
+  const teams = ["Front of House","Kitchen & Bar","Management","Supply Chain"];
+  const stage3Questions = [
+    {
+      text: "Launching a new seasonal menu next month.",
+      primary: "Kitchen & Bar",
+      supporting: ["Management","Front of House"],
+      reasoning: "Kitchen & Bar owns recipe creation and execution. Management approves cost and pricing. Front of House needs training on how to describe and sell the new items to guests."
+    },
+    {
+      text: "A large private event booking for 40 guests.",
+      primary: "Management",
+      supporting: ["Front of House","Kitchen & Bar"],
+      reasoning: "Management owns the booking, staffing plan, and client communication. Front of House prepares seating and service flow. Kitchen & Bar plans a menu that can scale for the group."
+    },
+    {
+      text: "Running a social media promotion for a new drink.",
+      primary: "Management",
+      supporting: ["Kitchen & Bar","Supply Chain"],
+      reasoning: "Management (or a marketing lead within it) owns messaging and campaign timing. Kitchen & Bar ensures the drink is ready to showcase. Supply Chain confirms enough stock exists to meet demand."
+    }
+  ];
+
+  /* ============ STATE ============ */
+  const state = {
+    stageIndex: 0, // 0,1,2 = stage1/2/3 blocks; 3 = dashboard
+    s1: { current:0, answered:[], score:0 },
+    s2: { current:0, answered:[], score:0 },
+    s3: { current:0, answered:[], score:0 },
+    selectedChip: null
+  };
+
+  const TOTAL_STAGES = 4; // 3 gameplay + dashboard
+  const stageContainer = document.getElementById('stageContainer');
+  const progressTrack = document.getElementById('progressTrack');
+
+  function renderProgress(){
+    progressTrack.innerHTML = '';
+    for(let i=0;i<TOTAL_STAGES;i++){
+      const dot = document.createElement('div');
+      dot.className = 'progress-dot';
+      if(i < state.stageIndex) dot.classList.add('done');
+      if(i === state.stageIndex) dot.classList.add('active');
+      progressTrack.appendChild(dot);
+    }
+  }
+
+  /* ============ ROUTER ============ */
+  function render(){
+    renderProgress();
+    stageContainer.innerHTML = '';
+    if(state.stageIndex === 0) renderStage1();
+    else if(state.stageIndex === 1) renderStage2();
+    else if(state.stageIndex === 2) renderStage3();
+    else renderDashboard();
+  }
+
+  /* ============ STAGE 1 ============ */
+  function renderStage1(){
+    const q = stage1Questions[state.s1.current];
+    const answeredAlready = state.s1.answered[state.s1.current];
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="stage-eyebrow">Stage 1 · Who Owns This?</div>
+      <h2 class="stage-title">Question ${state.s1.current+1} of 3</h2>
+      <p class="stage-desc">Drag — or tap — the role that should truly own this task. Think about who is closest to the problem and has the authority to act.</p>
+      <div class="ticket">
+        <div class="ticket-q">Order Ticket #${state.s1.current+1}</div>
+        <div class="ticket-text">${q.text}</div>
+        <div class="dropzone" id="s1-drop" data-role="">
+          Drop the owning role here
+        </div>
+      </div>
+      <div class="hint-tap">💡 On mobile: tap a role chip, then tap the drop zone.</div>
+      <div class="role-pool" id="s1-pool"></div>
+      <div id="s1-feedback"></div>
+      <div class="btn-row">
+        <button class="pill-btn secondary" id="s1-back" ${state.s1.current===0 ? 'disabled':''}>← Back</button>
+        <button class="pill-btn" id="s1-next" disabled>Next →</button>
+      </div>
+    `;
+    stageContainer.appendChild(card);
+
+    const pool = card.querySelector('#s1-pool');
+    const drop = card.querySelector('#s1-drop');
+    const feedback = card.querySelector('#s1-feedback');
+    const nextBtn = card.querySelector('#s1-next');
+    const backBtn = card.querySelector('#s1-back');
+
+    // shuffle-ish subset of roles including correct one
+    const options = buildOptionSet(q.correct, 5);
+    options.forEach(r=>{
+      const chip = makeChip(r, ()=> placeInZone(r));
+      pool.appendChild(chip);
+    });
+
+    setupDropZone(drop, (role)=> placeInZone(role));
+
+    function placeInZone(role){
+      if(answeredAlready) return;
+      drop.textContent = role;
+      drop.dataset.role = role;
+      drop.classList.add('filled');
+      const correct = role === q.correct;
+      evaluateS1(correct, role);
+    }
+
+    function evaluateS1(correct, role){
+      state.s1.answered[state.s1.current] = { role, correct };
+      if(correct) state.s1.score++;
+      drop.classList.toggle('wrong', !correct);
+      feedback.innerHTML = feedbackBoxS1(q, correct, role);
+      nextBtn.disabled = false;
+      Array.from(pool.children).forEach(c=>c.classList.add('placed'));
+    }
+
+    backBtn.onclick = ()=>{
+      if(state.s1.current>0){ state.s1.current--; render(); }
+    };
+    nextBtn.onclick = ()=>{
+      if(state.s1.current < stage1Questions.length -1){
+        state.s1.current++;
+        render();
+      } else {
+        state.stageIndex = 1;
+        render();
+      }
+    };
+
+    if(answeredAlready){
+      drop.textContent = answeredAlready.role;
+      drop.dataset.role = answeredAlready.role;
+      drop.classList.add('filled');
+      drop.classList.toggle('wrong', !answeredAlready.correct);
+      feedback.innerHTML = feedbackBoxS1(q, answeredAlready.correct, answeredAlready.role);
+      nextBtn.disabled = false;
+      Array.from(pool.children).forEach(c=>c.classList.add('placed'));
+    }
+  }
+
+  function feedbackBoxS1(q, correct, chosen){
+    const cls = correct ? '' : 'incorrect';
+    const verdict = correct ? "Nicely owned! ✅" : `Not quite — "${chosen}" isn't the primary owner.`;
+    return `<div class="feedback ${cls}">
+      <div>${verdict}</div>
+      <div style="margin-top:8px;"><b>Owner:</b> ${q.correct}</div>
+      <div><b>Assists:</b> ${q.assistants.join(', ')}</div>
+      <div style="margin-top:6px;">${q.reasoning}</div>
+    </div>`;
+  }
+
+  /* ============ STAGE 2 ============ */
+  function renderStage2(){
+    const q = stage2Questions[state.s2.current];
+    const answeredAlready = state.s2.answered[state.s2.current];
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="stage-eyebrow">Stage 2 · Task Routing</div>
+      <h2 class="stage-title">Question ${state.s2.current+1} of 3</h2>
+      <p class="stage-desc">Drag the roles into the correct order to route this task through the café.</p>
+      <div class="ticket">
+        <div class="ticket-q">Workflow Ticket #${state.s2.current+1}</div>
+        <div class="ticket-text">${q.text}</div>
+      </div>
+      <div class="sequence" id="s2-sequence"></div>
+      <div class="hint-tap">💡 On mobile: tap a role, then tap the correct slot in order.</div>
+      <div class="role-pool" id="s2-pool"></div>
+      <div id="s2-feedback"></div>
+      <div class="btn-row">
+        <button class="pill-btn secondary" id="s2-back">← Back</button>
+        <button class="pill-btn" id="s2-next" disabled>Next →</button>
+      </div>
+    `;
+    stageContainer.appendChild(card);
+
+    const seqWrap = card.querySelector('#s2-sequence');
+    const pool = card.querySelector('#s2-pool');
+    const feedback = card.querySelector('#s2-feedback');
+    const nextBtn = card.querySelector('#s2-next');
+    const backBtn = card.querySelector('#s2-back');
+
+    const filled = new Array(q.slots.length).fill(null);
+    const slotEls = [];
+
+    q.slotLabels.forEach((label, idx)=>{
+      if(idx>0){
+        const arrow = document.createElement('div');
+        arrow.className = 'arrow';
+        arrow.textContent = '→';
+        seqWrap.appendChild(arrow);
+      }
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.dataset.index = idx;
+      slot.innerHTML = `<div class="ticket-mini">🎫</div><div class="slot-label">${label}</div><div class="slot-value">Drop role</div>`;
+      seqWrap.appendChild(slot);
+      slotEls.push(slot);
+      setupDropZone(slot, (role)=> placeSlot(idx, role));
+    });
+
+    const optionRoles = buildOptionSetMulti(q.slots, 6);
+    optionRoles.forEach(r=>{
+      const chip = makeChip(r, ()=> {
+        const openIdx = filled.findIndex(v=>v===null);
+        if(openIdx !== -1) placeSlot(openIdx, r);
+      });
+      chip.dataset.role = r;
+      pool.appendChild(chip);
+    });
+
+    function placeSlot(idx, role){
+      if(answeredAlready) return;
+      if(filled[idx]) return;
+      filled[idx] = role;
+      const slot = slotEls[idx];
+      slot.querySelector('.slot-value').textContent = role;
+      slot.classList.add('filled');
+      const chip = Array.from(pool.children).find(c=>c.dataset.role===role && !c.classList.contains('placed'));
+      if(chip) chip.classList.add('placed');
+
+      if(filled.every(v=>v!==null)){
+        finishSequence();
+      }
+    }
+
+    function finishSequence(){
+      const correct = filled.every((r,i)=> r === q.slots[i]);
+      state.s2.answered[state.s2.current] = { filled: filled.slice(), correct };
+      if(correct) state.s2.score++;
+
+      slotEls.forEach((slot,i)=>{
+        slot.classList.toggle('wrong', filled[i] !== q.slots[i]);
+        slot.classList.add('animating');
+      });
+
+      feedback.innerHTML = `<div class="feedback ${correct?'':'incorrect'}">
+        <div>${correct ? "Perfect routing! ✅ Watch the ticket travel through the café." : "The order got a little tangled — here's the correct route:"}</div>
+        <div style="margin-top:8px;"><b>Correct flow:</b> ${q.slots.join(' → ')}</div>
+        <div style="margin-top:6px;">${q.explanation}</div>
+      </div>`;
+      nextBtn.disabled = false;
+    }
+
+    backBtn.onclick = ()=>{
+      if(state.s2.current>0){ state.s2.current--; render(); }
+      else { state.stageIndex = 0; state.s1.current = stage1Questions.length-1; render(); }
+    };
+    nextBtn.onclick = ()=>{
+      if(state.s2.current < stage2Questions.length-1){
+        state.s2.current++; render();
+      } else {
+        state.stageIndex = 2; render();
+      }
+    };
+
+    if(answeredAlready){
+      answeredAlready.filled.forEach((role, idx)=> placeSlot(idx, role));
+    }
+  }
+
+  /* ============ STAGE 3 ============ */
+  function renderStage3(){
+    const q = stage3Questions[state.s3.current];
+    const answeredAlready = state.s3.answered[state.s3.current];
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="stage-eyebrow">Stage 3 · Collaboration Challenge</div>
+      <h2 class="stage-title">Question ${state.s3.current+1} of 3</h2>
+      <p class="stage-desc">Assign teams to this scenario. Choose one <b>Primary Owner</b> and up to 3 <b>Supporting Teams</b>.</p>
+      <div class="ticket">
+        <div class="ticket-q">Collaboration Ticket #${state.s3.current+1}</div>
+        <div class="ticket-text">${q.text}</div>
+      </div>
+      <div class="assign-controls">
+        <button class="mode-btn active-primary" id="mode-primary" data-mode="primary">Assign Primary Owner</button>
+        <button class="mode-btn" id="mode-support" data-mode="support">Assign Supporting Team</button>
+      </div>
+      <div class="team-grid" id="s3-teams"></div>
+      <div id="s3-feedback"></div>
+      <div class="btn-row">
+        <button class="pill-btn secondary" id="s3-back">← Back</button>
+        <button class="pill-btn" id="s3-next" disabled>Next →</button>
+      </div>
+    `;
+    stageContainer.appendChild(card);
+
+    const teamsWrap = card.querySelector('#s3-teams');
+    const modePrimary = card.querySelector('#mode-primary');
+    const modeSupport = card.querySelector('#mode-support');
+    const feedback = card.querySelector('#s3-feedback');
+    const nextBtn = card.querySelector('#s3-next');
+    const backBtn = card.querySelector('#s3-back');
+
+    let mode = 'primary';
+    let picked = { primary: null, supporting: [] };
+    let locked = false;
+
+    modePrimary.onclick = ()=>{ if(locked) return; mode='primary'; modePrimary.classList.add('active-primary'); modeSupport.classList.remove('active-support'); };
+    modeSupport.onclick = ()=>{ if(locked) return; mode='support'; modeSupport.classList.add('active-support'); modePrimary.classList.remove('active-primary'); };
+
+    teams.forEach(t=>{
+      const el = document.createElement('div');
+      el.className = 'team-card';
+      el.innerHTML = `<div>${teamIcon(t)} ${t}</div><div class="role-toggle">tap to assign</div>`;
+      el.onclick = ()=>{
+        if(locked) return;
+        if(mode === 'primary'){
+          picked.primary = (picked.primary === t) ? null : t;
+          picked.supporting = picked.supporting.filter(s=>s!==picked.primary);
+        } else {
+          if(t === picked.primary) return;
+          if(picked.supporting.includes(t)){
+            picked.supporting = picked.supporting.filter(s=>s!==t);
+          } else if(picked.supporting.length < 3){
+            picked.supporting.push(t);
+          }
+        }
+        refreshTeamCards();
+        checkReady();
+      };
+      teamsWrap.appendChild(el);
+    });
+
+    function refreshTeamCards(){
+      Array.from(teamsWrap.children).forEach((el, i)=>{
+        const t = teams[i];
+        el.classList.toggle('primary', picked.primary === t);
+        el.classList.toggle('supporting', picked.supporting.includes(t));
+        const tag = el.querySelector('.role-toggle');
+        if(picked.primary === t) tag.textContent = 'Primary Owner';
+        else if(picked.supporting.includes(t)) tag.textContent = 'Supporting';
+        else tag.textContent = 'tap to assign';
+      });
+    }
+
+    function checkReady(){
+      nextBtn.disabled = !(picked.primary && !locked === true) || !picked.primary;
+      // enable a "check" — we submit automatically once primary is chosen and user is satisfied
+      if(picked.primary){
+        submitBtnShow();
+      }
+    }
+
+    function submitBtnShow(){
+      if(!feedback.querySelector('.submit-check')){
+        feedback.innerHTML = `<button class="pill-btn" style="margin-top:6px;" id="s3-submit">Confirm Assignment</button>`;
+      }
+      const submitBtn = feedback.querySelector('#s3-submit');
+      if(submitBtn) submitBtn.onclick = evaluate;
+    }
+
+    function evaluate(){
+      locked = true;
+      const primaryCorrect = picked.primary === q.primary;
+      const supportOverlap = picked.supporting.filter(s=>q.supporting.includes(s)).length;
+      const supportTotal = q.supporting.length;
+      const goodCollab = supportOverlap >= Math.ceil(supportTotal/2);
+      const correct = primaryCorrect && goodCollab;
+      state.s3.answered[state.s3.current] = { picked: JSON.parse(JSON.stringify(picked)), correct, primaryCorrect, supportOverlap, supportTotal };
+      if(correct) state.s3.score++;
+      else if(primaryCorrect || supportOverlap>0) state.s3.score += 0.5;
+
+      feedback.innerHTML = `<div class="feedback ${correct?'':'incorrect'}">
+        <div>${correct ? "Beautifully coordinated team! ✅" : "Good instinct — here's how the café would actually structure it:"}</div>
+        <div style="margin-top:8px;"><b>Primary Owner:</b> ${q.primary}</div>
+        <div><b>Supporting Teams:</b> ${q.supporting.join(', ')}</div>
+        <div class="flow-note">🔁 <b>Communication flow:</b> ${q.primary} briefs ${q.supporting.join(' & ')}, then checks back in before execution.</div>
+        <div style="margin-top:6px;">${q.reasoning}</div>
+      </div>`;
+      nextBtn.disabled = false;
+      modePrimary.style.pointerEvents = 'none';
+      modeSupport.style.pointerEvents = 'none';
+    }
+
+    backBtn.onclick = ()=>{
+      if(state.s3.current>0){ state.s3.current--; render(); }
+      else { state.stageIndex = 1; state.s2.current = stage2Questions.length-1; render(); }
+    };
+    nextBtn.onclick = ()=>{
+      if(state.s3.current < stage3Questions.length-1){
+        state.s3.current++; render();
+      } else {
+        state.stageIndex = 3; render(); triggerConfetti();
+      }
+    };
+
+    if(answeredAlready){
+      picked = answeredAlready.picked;
+      refreshTeamCards();
+      evaluate();
+      locked = true;
+    }
+  }
+
+  function teamIcon(t){
+    if(t==='Front of House') return '🧑‍🍳';
+    if(t==='Kitchen & Bar') return '☕';
+    if(t==='Management') return '📋';
+    if(t==='Supply Chain') return '📦';
+    return '👥';
+  }
+
+  /* ============ DASHBOARD ============ */
+  function renderDashboard(){
+    const s1pct = Math.round((state.s1.score/3)*100);
+    const s2pct = Math.round((state.s2.score/3)*100);
+    const s3pct = Math.round((state.s3.score/3)*100);
+    const workflowPct = Math.round(((s1pct+s2pct)/2));
+
+    const metrics = [
+      { label:'Ownership', value:s1pct, color:'var(--coffee)' },
+      { label:'Delegation', value:s3pct, color:'var(--mocha)' },
+      { label:'Collaboration', value:s3pct, color:'var(--dusty)' },
+      { label:'Workflow Thinking', value:s2pct, color:'var(--sage)' },
+    ];
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="stage-eyebrow">Final Dashboard</div>
+      <h2 class="stage-title">Your Organizational Understanding</h2>
+      <p class="stage-desc">No points here — just a picture of how you think about ownership, delegation, collaboration, and workflow.</p>
+      <div class="dash-grid" id="dashGrid"></div>
+    `;
+    stageContainer.appendChild(card);
+
+    const grid = card.querySelector('#dashGrid');
+    metrics.forEach(m=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'metric';
+      const r = 54; const c = 2*Math.PI*r;
+      wrap.innerHTML = `
+        <div class="ring">
+          <svg viewBox="0 0 130 130">
+            <circle class="bg" cx="65" cy="65" r="${r}"></circle>
+            <circle class="fg" cx="65" cy="65" r="${r}" stroke="${m.color}"
+              stroke-dasharray="${c}" stroke-dashoffset="${c}"></circle>
+          </svg>
+          <div class="ring-value">0%</div>
+        </div>
+        <div class="metric-label">${m.label}</div>
+      `;
+      grid.appendChild(wrap);
+      const fg = wrap.querySelector('.fg');
+      const valEl = wrap.querySelector('.ring-value');
+      requestAnimationFrame(()=>{
+        setTimeout(()=>{
+          const offset = c - (m.value/100)*c;
+          fg.style.strokeDashoffset = offset;
+          animateNumber(valEl, m.value);
+        }, 150);
+      });
+    });
+
+    // Reflection card
+    const refCard = document.createElement('div');
+    refCard.className = 'card';
+    refCard.innerHTML = `
+      <div class="stage-eyebrow">Reflection</div>
+      <h2 class="stage-title">What This Round Taught You</h2>
+      <div class="reflection-block" id="reflectionBlock"></div>
+      <div class="btn-row">
+        <button class="pill-btn secondary" id="restartBtn">↻ Try Another Round</button>
+      </div>
+    `;
+    stageContainer.appendChild(refCard);
+    const rb = refCard.querySelector('#reflectionBlock');
+    rb.innerHTML = buildReflection(s1pct, s2pct, s3pct);
+
+    refCard.querySelector('#restartBtn').onclick = ()=>{
+      state.stageIndex = 0;
+      state.s1 = { current:0, answered:[], score:0 };
+      state.s2 = { current:0, answered:[], score:0 };
+      state.s3 = { current:0, answered:[], score:0 };
+      render();
+    };
+  }
+
+  function buildReflection(s1,s2,s3){
+    const understood = s1>=66 ? "You consistently identified the person closest to the problem as the true owner — a strong instinct for real accountability."
+      : "You're building a sense for ownership, though a few tasks tripped you up — that's normal when roles overlap in small teams.";
+    const overAssigned = s3 < 100 ? "In the collaboration challenge, you sometimes pulled in more (or fewer) supporting teams than the scenario needed — a common habit when trying to be thorough."
+      : "You kept supporting teams lean and relevant, avoiding the trap of over-including people 'just in case.'";
+    const underCollab = s2 < 66 ? "A few workflow routes revealed under-estimated hand-offs — steps got skipped or reordered, which is exactly where real bottlenecks form."
+      : "Your workflow routing showed a solid grasp of how a task should hand off between people in sequence.";
+    const insight = "The biggest lesson from Task Compass: real organizations run on hand-offs, not heroics. The best-run café isn't the one where one person does everything — it's the one where ownership is clear, support is intentional, and everyone knows exactly who to hand the ticket to next.";
+
+    return `
+      <div class="reflection-item"><div class="reflection-icon">🧭</div><div><h4>What you understood well</h4><p>${understood}</p></div></div>
+      <div class="reflection-item"><div class="reflection-icon">⚖️</div><div><h4>Where you over/under-assigned responsibility</h4><p>${overAssigned}</p></div></div>
+      <div class="reflection-item"><div class="reflection-icon">🤝</div><div><h4>Where you underestimated collaboration</h4><p>${underCollab}</p></div></div>
+      <div class="reflection-item"><div class="reflection-icon">💡</div><div><h4>One insight about how organizations really work</h4><p>${insight}</p></div></div>
+    `;
+  }
+
+  function animateNumber(el, target){
+    let current = 0;
+    const step = Math.max(1, Math.round(target/30));
+    const iv = setInterval(()=>{
+      current += step;
+      if(current >= target){ current = target; clearInterval(iv); }
+      el.textContent = current + '%';
+    }, 20);
+  }
+
+  /* ============ HELPERS ============ */
+  function buildOptionSet(correctRole, count){
+    const others = ROLES.filter(r=>r!==correctRole);
+    shuffle(others);
+    const set = [correctRole, ...others.slice(0, count-1)];
+    shuffle(set);
+    return set;
+  }
+  function buildOptionSetMulti(correctRoles, count){
+    const others = ROLES.filter(r=>!correctRoles.includes(r));
+    shuffle(others);
+    const need = Math.max(0, count - correctRoles.length);
+    const set = [...correctRoles, ...others.slice(0, need)];
+    shuffle(set);
+    return set;
+  }
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function makeChip(role, onActivate){
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = role;
+    chip.draggable = true;
+    chip.dataset.role = role;
+
+    chip.addEventListener('dragstart', (e)=>{
+      e.dataTransfer.setData('text/plain', role);
+      state.selectedChip = role;
+    });
+
+    chip.addEventListener('click', ()=>{
+      if(chip.classList.contains('placed')) return;
+      document.querySelectorAll('.chip.selected').forEach(c=>c.classList.remove('selected'));
+      if(state.selectedChip === role){
+        state.selectedChip = null;
+      } else {
+        state.selectedChip = role;
+        chip.classList.add('selected');
+      }
+    });
+
+    return chip;
+  }
+
+  function setupDropZone(zone, onDrop){
+    zone.addEventListener('dragover', (e)=>{
+      e.preventDefault();
+      zone.classList.add('dragover');
+    });
+    zone.addEventListener('dragleave', ()=> zone.classList.remove('dragover'));
+    zone.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      const role = e.dataTransfer.getData('text/plain');
+      if(role) onDrop(role);
+    });
+    zone.addEventListener('click', ()=>{
+      if(state.selectedChip){
+        const role = state.selectedChip;
+        state.selectedChip = null;
+        document.querySelectorAll('.chip.selected').forEach(c=>c.classList.remove('selected'));
+        onDrop(role);
+      }
+    });
+  }
+
+  /* ============ CONFETTI ============ */
+  function triggerConfetti(){
+    const colors = ['#F8D9D6','#FFDCC8','#EFDCCB','#FFF0C7','#DDE8D6','#A47551'];
+    for(let i=0;i<60;i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      const size = 6 + Math.random()*6;
+      piece.style.width = size + 'px';
+      piece.style.height = (size*0.6) + 'px';
+      piece.style.left = Math.random()*100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.animationDuration = (2.5 + Math.random()*2) + 's';
+      piece.style.animationDelay = (Math.random()*0.6) + 's';
+      document.body.appendChild(piece);
+      setTimeout(()=> piece.remove(), 5000);
+    }
+  }
+
+  /* ============ INIT ============ */
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumen — AI Study Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================= TOKENS ============================= */
+:root{
+  --ice: #F7F9FC;
+  --pearl: #F1EFFB;
+  --cloud: #EFF6F7;
+  --indigo: #4B4FE0;
+  --indigo-deep: #3733B0;
+  --slate-blue: #6C6FD1;
+  --lavender: #C9C3F5;
+  --sky: #AFE0F5;
+  --mint: #B6ECD3;
+  --peach: #FFD7BE;
+  --butter: #FFEBAE;
+
+  --ink: #1E2036;
+  --ink-soft: #52546E;
+  --ink-faint: #8B8DA6;
+  --line: rgba(30,32,54,0.08);
+  --surface: rgba(255,255,255,0.72);
+  --surface-solid: #ffffff;
+
+  --radius-lg: 28px;
+  --radius-md: 22px;
+  --radius-sm: 14px;
+
+  --shadow-soft: 0 8px 30px rgba(76,79,180,0.10), 0 2px 8px rgba(76,79,180,0.06);
+  --shadow-lift: 0 20px 45px rgba(76,79,180,0.18), 0 6px 16px rgba(76,79,180,0.08);
+
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --font-scale: 1;
+}
+
+[data-theme="dark"]{
+  --ice: #14152A;
+  --pearl: #1A1B34;
+  --cloud: #16192D;
+  --ink: #F0F1FA;
+  --ink-soft: #C6C8DE;
+  --ink-faint: #8C8FB0;
+  --line: rgba(255,255,255,0.08);
+  --surface: rgba(30,32,58,0.65);
+  --surface-solid: #1D1F3A;
+  --shadow-soft: 0 8px 30px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-lift: 0 20px 45px rgba(0,0,0,0.45), 0 6px 16px rgba(0,0,0,0.25);
+}
+
+*{ box-sizing: border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+body{
+  font-family: var(--font-body);
+  background:
+    radial-gradient(circle at 10% 10%, var(--pearl), transparent 45%),
+    radial-gradient(circle at 90% 15%, var(--cloud), transparent 40%),
+    radial-gradient(circle at 50% 100%, var(--sky) 0%, transparent 35%),
+    var(--ice);
+  background-attachment: fixed;
+  color: var(--ink);
+  overflow:hidden;
+  font-size: calc(16px * var(--font-scale));
+  transition: background 0.5s ease, color 0.4s ease;
+}
+
+/* ============================= AMBIENT LAYER ============================= */
+.ambient{
+  position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+}
+.blob{
+  position:absolute; border-radius:50%;
+  filter: blur(60px);
+  opacity:0.55;
+  animation: float 22s ease-in-out infinite;
+  will-change: transform;
+}
+.blob.b1{ width:420px; height:420px; top:-120px; left:-100px; background: radial-gradient(circle, var(--lavender), transparent 70%); }
+.blob.b2{ width:380px; height:380px; top:30%; right:-140px; background: radial-gradient(circle, var(--sky), transparent 70%); animation-duration: 28s; animation-delay: -6s;}
+.blob.b3{ width:340px; height:340px; bottom:-140px; left:20%; background: radial-gradient(circle, var(--mint), transparent 70%); animation-duration: 26s; animation-delay: -12s;}
+.blob.b4{ width:260px; height:260px; bottom:10%; right:15%; background: radial-gradient(circle, var(--peach), transparent 70%); animation-duration: 20s; animation-delay: -3s;}
+
+@keyframes float{
+  0%,100%{ transform: translate(0,0) scale(1); }
+  33%{ transform: translate(30px,-40px) scale(1.08); }
+  66%{ transform: translate(-25px,25px) scale(0.95); }
+}
+
+.cursor-glow{
+  position: fixed; width:340px; height:340px; border-radius:50%;
+  background: radial-gradient(circle, rgba(75,79,224,0.10), transparent 70%);
+  pointer-events:none; z-index:1; transform: translate(-50%,-50%);
+  transition: opacity 0.3s ease;
+  will-change: left, top;
+}
+
+.particles{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+.particle{
+  position:absolute; bottom:-10px; width:5px; height:5px; border-radius:50%;
+  background: var(--slate-blue); opacity:0.25;
+  animation: rise linear infinite;
+}
+@keyframes rise{
+  0%{ transform: translateY(0) translateX(0); opacity:0; }
+  10%{ opacity:0.35; }
+  90%{ opacity:0.2; }
+  100%{ transform: translateY(-100vh) translateX(20px); opacity:0; }
+}
+
+/* ============================= APP SHELL ============================= */
+.app{
+  position:relative; z-index:2;
+  display:grid;
+  grid-template-columns: 280px 1fr;
+  height:100vh;
+}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{
+  background: var(--surface);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-right: 1px solid var(--line);
+  display:flex; flex-direction:column;
+  padding: 22px 16px;
+  gap:18px;
+  transition: transform 0.35s ease;
+  z-index: 10;
+}
+.brand{
+  display:flex; align-items:center; gap:10px; padding: 4px 8px 10px;
+}
+.brand-mark{
+  width:38px; height:38px; border-radius:12px;
+  background: linear-gradient(135deg, var(--indigo), var(--slate-blue) 60%, var(--lavender));
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: var(--shadow-soft);
+  position:relative; overflow:hidden;
+}
+.brand-mark svg{ width:20px; height:20px; }
+.brand-name{ font-family: var(--font-display); font-weight:700; font-size:1.15rem; letter-spacing:-0.02em; }
+.brand-sub{ font-size:0.68rem; color: var(--ink-faint); font-weight:500; letter-spacing:0.03em; text-transform:uppercase; margin-top:1px;}
+
+.new-chat-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  background: linear-gradient(135deg, var(--indigo), var(--indigo-deep));
+  color:white; border:none; padding: 12px 16px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-weight:600; font-size:0.88rem;
+  cursor:pointer; position:relative; overflow:hidden;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.new-chat-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.new-chat-btn:active{ transform: translateY(0); }
+.shine{
+  position:absolute; top:0; left:-60%; width:40%; height:100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+  transform: skewX(-20deg);
+  animation: shine-move 3.2s ease-in-out infinite;
+}
+@keyframes shine-move{
+  0%{ left:-60%; }
+  50%{ left:130%; }
+  100%{ left:130%; }
+}
+
+.sidebar-section{ display:flex; flex-direction:column; gap:6px; }
+.sidebar-label{
+  font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em;
+  color: var(--ink-faint); font-weight:700; padding: 6px 10px 2px;
+}
+.history-list{ display:flex; flex-direction:column; gap:3px; overflow-y:auto; flex:1; }
+.history-item{
+  display:flex; align-items:center; gap:10px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  font-size:0.85rem; color: var(--ink-soft); cursor:pointer;
+  transition: background 0.2s ease, transform 0.15s ease, color 0.2s ease;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  border: 1px solid transparent;
+}
+.history-item:hover{ background: rgba(75,79,224,0.08); color: var(--ink); transform: translateX(2px); }
+.history-item.active{ background: linear-gradient(135deg, rgba(75,79,224,0.12), rgba(175,224,245,0.18)); color: var(--indigo-deep); border-color: rgba(75,79,224,0.15); font-weight:600; }
+.history-item .dot{ width:6px; height:6px; border-radius:50%; background: var(--slate-blue); flex-shrink:0; }
+
+.sidebar-footer{ display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--line); padding-top:14px; }
+.footer-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.icon-btn{
+  width:36px; height:36px; border-radius:11px; border:1px solid var(--line);
+  background: var(--surface-solid); display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color: var(--ink-soft); transition: all 0.2s ease;
+}
+.icon-btn:hover{ background: var(--pearl); transform: translateY(-2px) rotate(-2deg); color: var(--indigo); }
+.icon-btn svg{ width:17px; height:17px; }
+
+.font-controls{ display:flex; align-items:center; gap:6px; background: var(--surface-solid); border:1px solid var(--line); border-radius:11px; padding:4px; }
+.font-controls button{ width:26px; height:26px; border:none; background:transparent; border-radius:8px; cursor:pointer; color:var(--ink-soft); font-weight:700; font-size:0.8rem; transition: background 0.15s ease;}
+.font-controls button:hover{ background: var(--pearl); color:var(--indigo); }
+
+/* ---------- MAIN ---------- */
+.main{
+  display:flex; flex-direction:column; height:100vh; position:relative;
+}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 18px 32px; border-bottom: 1px solid var(--line);
+  background: var(--surface); backdrop-filter: blur(20px);
+  z-index:5;
+}
+.topbar-left{ display:flex; align-items:center; gap:12px; }
+.hamburger{ display:none; }
+.mode-title{ font-family: var(--font-display); font-weight:700; font-size:1.05rem; }
+.mode-sub{ font-size:0.78rem; color:var(--ink-faint); }
+.topbar-right{ display:flex; align-items:center; gap:10px; }
+.status-pill{
+  display:flex; align-items:center; gap:6px; font-size:0.76rem; font-weight:600;
+  color: var(--ink-soft); background: var(--surface-solid); border:1px solid var(--line);
+  padding: 7px 12px; border-radius: 999px;
+}
+.status-dot{ width:7px; height:7px; border-radius:50%; background:#4CD97B; box-shadow: 0 0 0 3px rgba(76,217,123,0.2); animation: pulse-dot 2s ease-in-out infinite; }
+@keyframes pulse-dot{ 0%,100%{ opacity:1;} 50%{ opacity:0.4;} }
+
+.chat-scroll{
+  flex:1; overflow-y:auto; padding: 28px 0 10px;
+  scroll-behavior:smooth;
+}
+.chat-inner{ max-width: 760px; margin:0 auto; padding: 0 28px 20px; display:flex; flex-direction:column; gap:22px; }
+
+/* Empty state */
+.empty-state{
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  padding: 50px 20px 20px; gap: 22px; animation: fadeUp 0.6s ease;
+}
+@keyframes fadeUp{ from{ opacity:0; transform: translateY(14px);} to{ opacity:1; transform:translateY(0);} }
+.empty-orb{
+  width:76px; height:76px; border-radius:26px;
+  background: linear-gradient(135deg, var(--indigo), var(--slate-blue), var(--lavender));
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: var(--shadow-lift);
+  animation: bob 4s ease-in-out infinite;
+  position:relative;
+}
+@keyframes bob{ 0%,100%{ transform: translateY(0) rotate(0);} 50%{ transform: translateY(-8px) rotate(3deg);} }
+.empty-orb svg{ width:36px; height:36px; }
+.empty-title{ font-family: var(--font-display); font-weight:800; font-size:1.7rem; letter-spacing:-0.02em; }
+.empty-sub{ color: var(--ink-soft); font-size:0.95rem; max-width:440px; line-height:1.55; }
+
+.quick-grid{
+  display:grid; grid-template-columns: repeat(2,1fr); gap:14px; width:100%; max-width:640px; margin-top:6px;
+}
+.quick-card{
+  background: var(--surface-solid); border:1px solid var(--line); border-radius: var(--radius-md);
+  padding: 18px; text-align:left; cursor:pointer; position:relative; overflow:hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  display:flex; flex-direction:column; gap:8px;
+}
+.quick-card:hover{ transform: translateY(-5px); box-shadow: var(--shadow-lift); border-color: rgba(75,79,224,0.25); }
+.quick-card .qc-icon{
+  width:34px; height:34px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  font-size:1.05rem;
+}
+.qc-icon.i1{ background: linear-gradient(135deg, var(--lavender), var(--sky)); }
+.qc-icon.i2{ background: linear-gradient(135deg, var(--mint), var(--sky)); }
+.qc-icon.i3{ background: linear-gradient(135deg, var(--peach), var(--butter)); }
+.qc-icon.i4{ background: linear-gradient(135deg, var(--butter), var(--mint)); }
+.quick-card h4{ font-size:0.9rem; font-weight:700; font-family: var(--font-display); }
+.quick-card p{ font-size:0.78rem; color: var(--ink-faint); line-height:1.4; }
+
+.suggested-row{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:640px; }
+.chip{
+  border:1px solid var(--line); background: var(--surface-solid); padding: 9px 15px; border-radius:999px;
+  font-size:0.82rem; color: var(--ink-soft); cursor:pointer; transition: all 0.2s ease; font-weight:500;
+}
+.chip:hover{ background: linear-gradient(135deg, rgba(75,79,224,0.09), rgba(175,224,245,0.15)); color: var(--indigo-deep); border-color: rgba(75,79,224,0.2); transform: translateY(-2px); }
+
+/* Messages */
+.msg{ display:flex; gap:12px; animation: msgIn 0.4s ease; max-width:100%; }
+@keyframes msgIn{ from{ opacity:0; transform: translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+.msg.user{ flex-direction:row-reverse; }
+.avatar{
+  width:34px; height:34px; border-radius:11px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700;
+  box-shadow: var(--shadow-soft);
+}
+.avatar.assistant{ background: linear-gradient(135deg, var(--indigo), var(--slate-blue)); color:white; }
+.avatar.user{ background: linear-gradient(135deg, var(--peach), var(--butter)); color: var(--ink); }
+.bubble-wrap{ display:flex; flex-direction:column; gap:6px; max-width: 78%; }
+.msg.user .bubble-wrap{ align-items:flex-end; }
+.bubble{
+  padding: 14px 18px; border-radius: var(--radius-md); font-size:0.92rem; line-height:1.65;
+  box-shadow: var(--shadow-soft);
+}
+.msg.assistant .bubble{
+  background: var(--surface-solid); border: 1px solid var(--line); border-top-left-radius:8px;
+}
+.msg.user .bubble{
+  background: linear-gradient(135deg, var(--indigo), var(--indigo-deep)); color:white; border-top-right-radius:8px;
+}
+.bubble p{ margin-bottom:8px; }
+.bubble p:last-child{ margin-bottom:0; }
+.bubble ul, .bubble ol{ margin: 6px 0 6px 20px; }
+.bubble li{ margin-bottom:4px; }
+.bubble strong{ font-weight:700; }
+.bubble code{ background: rgba(75,79,224,0.1); padding:2px 6px; border-radius:6px; font-family:var(--font-mono); font-size:0.85em; }
+.msg.user .bubble code{ background: rgba(255,255,255,0.18); }
+.bubble pre{
+  background: #1E2036; color:#EAEBFA; padding:14px 16px; border-radius:14px; overflow-x:auto; margin:8px 0;
+  font-family: var(--font-mono); font-size:0.82rem; line-height:1.6; border:1px solid rgba(255,255,255,0.08);
+}
+.bubble pre code{ background:none; padding:0; color:inherit; }
+.bubble h1,.bubble h2,.bubble h3{ font-family: var(--font-display); margin: 10px 0 6px; }
+.bubble h3{ font-size:1rem; }
+.timestamp{ font-size:0.68rem; color: var(--ink-faint); padding: 0 4px; }
+
+.msg-actions{ display:flex; gap:6px; opacity:0; transition: opacity 0.2s ease; padding-left:4px; }
+.msg.assistant:hover .msg-actions{ opacity:1; }
+.mini-btn{
+  border:none; background: var(--surface-solid); border:1px solid var(--line); width:26px; height:26px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color: var(--ink-faint); transition: all 0.15s ease;
+}
+.mini-btn:hover{ color: var(--indigo); background: var(--pearl); }
+.mini-btn svg{ width:13px; height:13px; }
+
+/* typing indicator */
+.typing-bubble{
+  display:flex; align-items:center; gap:4px; padding: 16px 18px; background: var(--surface-solid);
+  border:1px solid var(--line); border-radius: var(--radius-md); border-top-left-radius:8px; width:fit-content;
+  box-shadow: var(--shadow-soft);
+}
+.typing-dot{ width:7px; height:7px; border-radius:50%; background: var(--slate-blue); animation: typing 1.4s ease-in-out infinite; }
+.typing-dot:nth-child(2){ animation-delay:0.2s; }
+.typing-dot:nth-child(3){ animation-delay:0.4s; }
+@keyframes typing{ 0%,60%,100%{ transform: translateY(0); opacity:0.4;} 30%{ transform: translateY(-6px); opacity:1;} }
+
+/* error state */
+.error-card{
+  display:flex; align-items:flex-start; gap:12px; background: linear-gradient(135deg, rgba(255,215,190,0.35), rgba(255,235,174,0.25));
+  border: 1px solid rgba(255,180,130,0.4); padding:16px 18px; border-radius: var(--radius-md);
+  max-width:78%; box-shadow: var(--shadow-soft);
+}
+.error-icon{ width:30px; height:30px; border-radius:10px; background: #FF9F5A; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:white;}
+.error-card h4{ font-size:0.88rem; font-weight:700; margin-bottom:3px; }
+.error-card p{ font-size:0.82rem; color: var(--ink-soft); line-height:1.5; }
+.retry-btn{
+  margin-top:8px; border:none; background: var(--ink); color:white; font-size:0.78rem; font-weight:600;
+  padding:7px 14px; border-radius:999px; cursor:pointer; transition: transform 0.15s ease;
+}
+.retry-btn:hover{ transform: translateY(-2px); }
+
+/* success animation */
+.success-toast{
+  position: fixed; top: 22px; right: 22px; z-index:100;
+  background: var(--surface-solid); border:1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 12px 18px; display:flex; align-items:center; gap:10px; box-shadow: var(--shadow-lift);
+  animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards;
+  font-size:0.85rem; font-weight:600;
+}
+@keyframes toastIn{ from{ opacity:0; transform: translateX(30px);} to{ opacity:1; transform:translateX(0);} }
+@keyframes toastOut{ to{ opacity:0; transform: translateX(30px); } }
+.success-check{
+  width:22px; height:22px; border-radius:50%; background: linear-gradient(135deg,#7BE0A8,#4CD97B);
+  display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0;
+}
+
+/* ---------- COMPOSER ---------- */
+.composer-zone{ padding: 14px 32px 22px; }
+.composer{
+  max-width:760px; margin:0 auto; background: var(--surface-solid); border:1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lift); padding: 10px 10px 10px 18px;
+  display:flex; flex-direction:column; gap:8px; position:relative;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.composer:focus-within{ border-color: rgba(75,79,224,0.35); }
+.attach-row{ display:flex; gap:8px; flex-wrap:wrap; padding-top:2px;}
+.attach-chip{
+  display:flex; align-items:center; gap:6px; background: linear-gradient(135deg, rgba(201,195,245,0.35), rgba(175,224,245,0.3));
+  border:1px solid var(--line); padding:5px 10px 5px 8px; border-radius:999px; font-size:0.75rem; font-weight:600; color: var(--ink-soft);
+}
+.attach-chip button{ border:none; background:none; cursor:pointer; color: var(--ink-faint); font-size:0.9rem; line-height:1;}
+.composer-row{ display:flex; align-items:flex-end; gap:8px; }
+.composer textarea{
+  flex:1; border:none; outline:none; resize:none; background:transparent; font-family: var(--font-body);
+  font-size:0.94rem; line-height:1.5; color: var(--ink); max-height:180px; padding: 10px 4px;
+}
+.composer textarea::placeholder{ color: var(--ink-faint); }
+.composer-actions{ display:flex; align-items:center; gap:6px; }
+.upload-btn{
+  width:38px; height:38px; border-radius:12px; border:1px dashed var(--line); background:transparent;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color: var(--ink-faint);
+  transition: all 0.2s ease; flex-shrink:0;
+}
+.upload-btn:hover{ border-color: var(--indigo); color: var(--indigo); background: var(--pearl); }
+.send-btn{
+  width:42px; height:42px; border-radius:14px; border:none; flex-shrink:0;
+  background: linear-gradient(135deg, var(--indigo), var(--indigo-deep));
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; position:relative;
+  overflow:hidden; transition: transform 0.15s ease, opacity 0.2s ease;
+  box-shadow: var(--shadow-soft);
+}
+.send-btn:hover{ transform: translateY(-2px) scale(1.03); }
+.send-btn:disabled{ opacity:0.4; cursor:not-allowed; transform:none; }
+.send-btn svg{ width:18px; height:18px; }
+
+.ripple{
+  position:absolute; border-radius:50%; background: rgba(255,255,255,0.55);
+  transform: scale(0); animation: ripple-anim 0.6s ease-out;
+  pointer-events:none;
+}
+@keyframes ripple-anim{ to{ transform: scale(3.5); opacity:0; } }
+
+.composer-hint{ text-align:center; font-size:0.7rem; color: var(--ink-faint); padding-top:2px; }
+.composer-hint kbd{ background: var(--pearl); padding:1px 6px; border-radius:5px; font-family: var(--font-mono); }
+
+/* ---------- DOC PANEL ---------- */
+.doc-toggle{
+  position: fixed; bottom: 24px; left: 24px; z-index:20;
+  display:flex; align-items:center; gap:8px; background: var(--surface-solid); border:1px solid var(--line);
+  padding: 10px 16px; border-radius:999px; font-size:0.78rem; font-weight:600; color: var(--ink-soft);
+  cursor:pointer; box-shadow: var(--shadow-soft); transition: all 0.2s ease;
+}
+.doc-toggle:hover{ transform: translateY(-3px); box-shadow: var(--shadow-lift); color: var(--indigo); }
+
+.doc-panel{
+  position: fixed; inset:0; z-index:50; background: rgba(20,21,42,0.45); backdrop-filter: blur(4px);
+  display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition: opacity 0.3s ease;
+}
+.doc-panel.open{ opacity:1; pointer-events:all; }
+.doc-card{
+  width:min(760px, 92vw); max-height:82vh; overflow-y:auto; background: var(--surface-solid);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lift); padding: 34px 38px;
+  transform: translateY(20px) scale(0.97); opacity:0; transition: all 0.35s cubic-bezier(.2,.9,.3,1.2);
+}
+.doc-panel.open .doc-card{ transform: translateY(0) scale(1); opacity:1; }
+.doc-card h2{ font-family: var(--font-display); font-size:1.4rem; margin-bottom:6px; }
+.doc-card .doc-lead{ color: var(--ink-faint); font-size:0.85rem; margin-bottom:22px; }
+.doc-section{ margin-bottom:20px; }
+.doc-section h3{ font-family: var(--font-display); font-size:0.95rem; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.doc-section h3 .tag{ font-size:0.65rem; background: var(--pearl); color: var(--indigo-deep); padding:2px 8px; border-radius:999px; font-weight:700; }
+.doc-section p, .doc-section li{ font-size:0.86rem; color: var(--ink-soft); line-height:1.65; }
+.doc-section ul{ margin-left:18px; margin-top:6px; }
+.doc-close{
+  position:absolute; top:20px; right:20px; width:32px; height:32px; border-radius:10px; border:1px solid var(--line);
+  background: transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color: var(--ink-soft);
+}
+.doc-close:hover{ background: var(--pearl); color: var(--indigo); }
+pre.sys-prompt{
+  background: #1E2036; color:#D9DBFA; padding:16px; border-radius:14px; font-family: var(--font-mono);
+  font-size:0.74rem; line-height:1.65; overflow-x:auto; white-space:pre-wrap;
+}
+
+/* scrollbars */
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-thumb{ background: rgba(75,79,224,0.2); border-radius:8px; }
+::-webkit-scrollbar-thumb:hover{ background: rgba(75,79,224,0.35); }
+
+/* responsive */
+@media (max-width: 880px){
+  .app{ grid-template-columns: 1fr; }
+  .sidebar{ position:fixed; left:0; top:0; bottom:0; width:270px; transform: translateX(-100%); box-shadow: var(--shadow-lift); }
+  .sidebar.open{ transform: translateX(0); }
+  .hamburger{ display:flex; }
+  .quick-grid{ grid-template-columns: 1fr; }
+  .topbar{ padding: 14px 18px; }
+  .composer-zone{ padding: 10px 14px 16px; }
+  .chat-inner{ padding: 0 14px 14px; }
+  .bubble-wrap{ max-width:88%; }
+}
+</style>
+</head>
+<body data-theme="light">
+
+<div class="ambient">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="blob b4"></div>
+</div>
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="particles" id="particles"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L14.2 9.2L21 12L14.2 14.8L12 22L9.8 14.8L3 12L9.8 9.2L12 2Z" fill="white"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Lumen</div>
+        <div class="brand-sub">Study Assistant</div>
+      </div>
+    </div>
+
+    <button class="new-chat-btn" id="newChatBtn">
+      <span class="shine"></span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      New conversation
+    </button>
+
+    <div class="sidebar-section" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+      <div class="sidebar-label">Recent</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="footer-row">
+        <div class="font-controls">
+          <button id="fontDown" title="Decrease text size">A−</button>
+          <button id="fontUp" title="Increase text size">A+</button>
+        </div>
+        <button class="icon-btn" id="themeToggle" title="Toggle theme">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v1M12 20v1M4.2 4.2l.7.7M18.4 18.4l.7.7M3 12h1M20 12h1M4.2 19.8l.7-.7M18.4 5.6l.7-.7"/><circle cx="12" cy="12" r="4.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn hamburger" id="hamburgerBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div>
+          <div class="mode-title">Study Session</div>
+          <div class="mode-sub">Ask, paste notes, or upload material to get started</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="status-pill"><span class="status-dot"></span> Claude connected</div>
+      </div>
+    </div>
+
+    <div class="chat-scroll" id="chatScroll">
+      <div class="chat-inner" id="chatInner">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-orb">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L14.2 9.2L21 12L14.2 14.8L12 22L9.8 14.8L3 12L9.8 9.2L12 2Z" fill="white"/></svg>
+          </div>
+          <div class="empty-title">What are we studying today?</div>
+          <div class="empty-sub">I can explain concepts, build study plans, summarize your notes, debug your code, and quiz you before an exam. Paste anything, upload a file, or pick a starting point below.</div>
+
+          <div class="quick-grid">
+            <button class="quick-card" data-prompt="Create a 7-day study plan for my Operating Systems exam covering process scheduling, deadlocks, and memory management. I have about 2 hours a day.">
+              <div class="qc-icon i1">🗓️</div>
+              <h4>Build a study plan</h4>
+              <p>Get a structured day-by-day plan tailored to your exam and time available.</p>
+            </button>
+            <button class="quick-card" data-prompt="Explain how a hash table works, step by step, with a simple real-world analogy and a short code example in Python.">
+              <div class="qc-icon i2">💡</div>
+              <h4>Explain a concept</h4>
+              <p>Clear, step-by-step explanations with analogies and examples.</p>
+            </button>
+            <button class="quick-card" data-prompt="Generate a 10-question quiz on DBMS normalization (1NF to BCNF) with answers and explanations at the end.">
+              <div class="qc-icon i3">📝</div>
+              <h4>Generate a quiz</h4>
+              <p>Practice questions with answers and reasoning to test yourself.</p>
+            </button>
+            <button class="quick-card" data-prompt="Review this code and tell me what's wrong with it, then explain how to fix it:\n\ndef fib(n):\n    if n <= 1: return n\n    return fib(n) + fib(n-1)">
+              <div class="qc-icon i4">💻</div>
+              <h4>Debug my code</h4>
+              <p>Paste code for review, bug fixes, or interview-style walkthroughs.</p>
+            </button>
+          </div>
+
+          <div class="suggested-row">
+            <button class="chip" data-prompt="Summarize this in bullet points: ">Summarize my notes</button>
+            <button class="chip" data-prompt="What should I focus on this week to prepare for placements in core CS subjects?">Placement prep advice</button>
+            <button class="chip" data-prompt="Explain time complexity (Big-O) like I'm preparing for a coding interview.">Explain Big-O</button>
+            <button class="chip" data-prompt="Give me 5 practice DSA problems on binary trees, from easy to hard.">Practice DSA problems</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer-zone">
+      <div class="composer" id="composer">
+        <div class="attach-row" id="attachRow"></div>
+        <div class="composer-row">
+          <button class="upload-btn" id="uploadBtn" title="Upload a document (UI preview)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+          </button>
+          <input type="file" id="fileInput" style="display:none" multiple>
+          <textarea id="userInput" placeholder="Ask a doubt, paste notes or code, or describe what you want to study…" rows="1"></textarea>
+          <div class="composer-actions">
+            <button class="send-btn" id="sendBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="composer-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift + Enter</kbd> for a new line</div>
+    </div>
+  </main>
+</div>
+
+<button class="doc-toggle" id="docToggle">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V4a1 1 0 00-1-1H6.5A2.5 2.5 0 004 5.5v14z"/></svg>
+  How this was built
+</button>
+
+<div class="doc-panel" id="docPanel">
+  <div class="doc-card">
+    <button class="doc-close" id="docClose">✕</button>
+    <h2>How Lumen was built</h2>
+    <div class="doc-lead">A behind-the-scenes look at the system prompt, UI decisions, and roadmap for this AI Study Assistant.</div>
+
+    <div class="doc-section">
+      <h3>1. System prompt design <span class="tag">Prompt Engineering</span></h3>
+      <p>Lumen is powered by a structured system prompt covering role, scope, constraints, output formatting, and edge-case handling — shown in full below. Key ideas:</p>
+      <ul>
+        <li><strong>Role &amp; scope:</strong> A patient, encouraging study mentor for college students — strictly scoped to learning, academics, coding help, and productivity.</li>
+        <li><strong>Format-aware replies:</strong> The prompt instructs Claude to choose the right output shape — a plan, a quiz, a step-by-step explanation, or a conversational answer — based on the request.</li>
+        <li><strong>Missing information:</strong> Instead of blocking on missing details (exam date, subject level), Claude is told to make one reasonable assumption, state it, and proceed — so the student always gets a usable answer.</li>
+        <li><strong>Safety rails:</strong> No academic dishonesty (e.g. "write my entire assignment for submission as-is"), no medical/mental-health diagnosis, redirect off-topic requests kindly.</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h3>2. UI decisions <span class="tag">Design</span></h3>
+      <ul>
+        <li><strong>Not a generic chatbot:</strong> quick-action cards, a persistent sidebar with history, and a documentation panel give it the shape of a SaaS product rather than a bare chat window.</li>
+        <li><strong>Calm, premium palette:</strong> ice white / pearl / soft cloud backgrounds with indigo and slate-blue as primaries, and lavender, sky, mint, peach, and butter as soft accent gradients — never pure black, never neon.</li>
+        <li><strong>Motion with restraint:</strong> floating gradient blobs, a cursor-following glow, rising particles, hover-lift on cards, button shine, and a typing indicator create a sense of life without becoming distracting.</li>
+        <li><strong>Accessibility-minded:</strong> adjustable font size, light/dark theme toggle, responsive collapsing sidebar, and clear empty/loading/error states.</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h3>3. Claude integration <span class="tag">Engineering</span></h3>
+      <p>Messages are sent via <code style="background:var(--pearl); padding:2px 6px; border-radius:6px;">fetch()</code> to <code style="background:var(--pearl); padding:2px 6px; border-radius:6px;">https://api.anthropic.com/v1/messages</code> with the system prompt and full conversation history on every call, since the API is stateless. No API key is required here — this artifact runs inside the Claude.ai environment, which handles authentication for you.</p>
+    </div>
+
+    <div class="doc-section">
+      <h3>4. Future improvements <span class="tag">Roadmap</span></h3>
+      <ul>
+        <li>Real document parsing (PDF/DOCX text extraction) instead of a UI-only upload preview.</li>
+        <li>Persisting conversation history to local storage or an account, across sessions.</li>
+        <li>Spaced-repetition flashcards generated automatically from quiz results.</li>
+        <li>Voice input for hands-free doubt-clearing while revising.</li>
+        <li>Progress dashboard tracking topics studied, quiz accuracy, and weak areas over time.</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h3>Full system prompt</h3>
+      <pre class="sys-prompt" id="sysPromptText"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   SYSTEM PROMPT
+   ========================================================= */
+const SYSTEM_PROMPT = `ROLE
+You are Lumen, an AI Study Assistant built for college students (primarily B.Tech / undergraduate CS & IT students) who are preparing for assignments, exams, coding practice, projects, and placement interviews. You act as a patient, knowledgeable, encouraging study mentor — never condescending, never robotic.
+
+SCOPE
+You help with:
+- Explaining academic concepts (CS fundamentals, math, engineering subjects, etc.) clearly and at the right depth for the student's level.
+- Creating structured, realistic study plans and revision schedules.
+- Summarizing pasted notes, articles, or textbook excerpts.
+- Generating quizzes and practice questions (with answers and reasoning) for self-testing.
+- Reviewing, debugging, and explaining pasted code, including complexity analysis and interview-style walkthroughs.
+- Giving personalized learning recommendations with clear reasoning ("why this next").
+- General productivity coaching for studying: time management, prioritization, exam strategy.
+You do NOT engage in tasks unrelated to learning/productivity (e.g. writing marketing copy, roleplay unrelated to study, generating unrelated creative fiction) — gently redirect back to studies if asked.
+
+CONSTRAINTS
+- Do not complete an entire graded assignment, essay, or exam response for the student to submit as their own unmodified work. Instead, teach the underlying concept, provide a worked example on a similar problem, or give a structured outline the student completes themselves.
+- Never fabricate facts, formulas, citations, or code behavior. If unsure, say so plainly and suggest how to verify.
+- Do not give medical, legal, or mental-health diagnoses. If a student expresses serious distress or burnout, respond with empathy, encourage rest and support from people around them, and suggest speaking to a counselor or trusted person — without diagnosing.
+- Keep responses focused and appropriately concise; avoid padding with unnecessary filler.
+- Match technical depth to what the student indicates about their level; when unclear, default to a clear undergraduate level and offer to go deeper or simpler.
+
+RESPONSE FORMAT
+Choose the output shape that fits the request:
+- Conversational doubt-clearing: direct, friendly prose, short paragraphs.
+- Concept explanations: step-by-step structure, plain-language analogy first, then technical detail, then a short example.
+- Study plans: structured by day/week with clear, time-boxed tasks and checkpoints.
+- Summaries: concise bullet points capturing key ideas, definitions, and relationships — not the whole original text.
+- Quizzes: numbered questions grouped by difficulty, followed by an answer key with brief reasoning for each.
+- Code help: show the corrected/explained code in a code block, followed by a plain-language explanation of what changed and why.
+Always use clear headings, bullets, and bold sparingly to aid scanning — do not over-format simple answers.
+
+MISSING INFORMATION HANDLING
+If a request is missing details (e.g. exam date, subject depth, which notes), do not stall the student with multiple clarifying questions. Make one sensible, clearly-stated assumption (e.g. "Assuming this is for a semester-level DBMS course...") and provide a complete, useful answer. Ask a single clarifying question only if proceeding would otherwise be actively unhelpful or clearly wrong.
+
+IRRELEVANT INPUT HANDLING
+If a message is unrelated to study/productivity/coding, respond briefly and kindly, note that Lumen is focused on helping with studies, and offer to redirect ("Happy to help — did you want help with a subject, plan, or piece of code?").
+
+SAFETY RULES
+- No help with cheating during live exams/proctored tests, impersonation for academic credit, or plagiarizing others' work as one's own.
+- No harmful, dangerous, or unsafe technical instructions (e.g. malware for a "cybersecurity project" without legitimate, bounded educational framing).
+- Treat all student data (pasted notes, code, personal details) as private context for this conversation only.
+
+EDGE CASES
+- If pasted "notes" are extremely long, summarize the most important themes first and offer to go section-by-section on request.
+- If code contains a security or academic-integrity red flag, point it out plainly and explain the safer/correct approach.
+- If a student seems to be guessing/panicking near a deadline, prioritize the highest-leverage 20% of material first and say so explicitly.
+- If the request spans multiple subjects/tasks at once, tackle them in a clearly labeled order rather than blending them together.`;
+
+document.getElementById('sysPromptText').textContent = SYSTEM_PROMPT;
+
+/* =========================================================
+   AMBIENT: cursor glow + particles
+   ========================================================= */
+const glow = document.getElementById('cursorGlow');
+window.addEventListener('mousemove', (e)=>{
+  glow.style.left = e.clientX + 'px';
+  glow.style.top = e.clientY + 'px';
+});
+
+const particleContainer = document.getElementById('particles');
+for(let i=0;i<18;i++){
+  const p = document.createElement('div');
+  p.className='particle';
+  p.style.left = Math.random()*100+'vw';
+  p.style.animationDuration = (12+Math.random()*14)+'s';
+  p.style.animationDelay = (Math.random()*14)+'s';
+  p.style.width = p.style.height = (3+Math.random()*4)+'px';
+  particleContainer.appendChild(p);
+}
+
+/* =========================================================
+   THEME + FONT CONTROLS
+   ========================================================= */
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', ()=>{
+  const body = document.body;
+  const isDark = body.getAttribute('data-theme') === 'dark';
+  body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+});
+
+let fontScale = 1;
+document.getElementById('fontUp').addEventListener('click', ()=>{
+  fontScale = Math.min(1.3, fontScale + 0.1);
+  document.documentElement.style.setProperty('--font-scale', fontScale);
+});
+document.getElementById('fontDown').addEventListener('click', ()=>{
+  fontScale = Math.max(0.85, fontScale - 0.1);
+  document.documentElement.style.setProperty('--font-scale', fontScale);
+});
+
+/* sidebar toggle (mobile) */
+const sidebar = document.getElementById('sidebar');
+document.getElementById('hamburgerBtn').addEventListener('click', ()=> sidebar.classList.toggle('open'));
+
+/* doc panel */
+const docPanel = document.getElementById('docPanel');
+document.getElementById('docToggle').addEventListener('click', ()=> docPanel.classList.add('open'));
+document.getElementById('docClose').addEventListener('click', ()=> docPanel.classList.remove('open'));
+docPanel.addEventListener('click', (e)=>{ if(e.target === docPanel) docPanel.classList.remove('open'); });
+
+/* =========================================================
+   CONVERSATION STATE
+   ========================================================= */
+let conversations = {};
+let currentId = null;
+let messageHistory = []; // {role, content}
+let attachedFiles = [];
+
+function uid(){ return 'c_' + Math.random().toString(36).slice(2,9); }
+
+function createConversation(){
+  const id = uid();
+  conversations[id] = { id, title: 'New conversation', messages: [] };
+  currentId = id;
+  messageHistory = [];
+  renderHistory();
+  renderEmptyState();
+}
+createConversation();
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  const ids = Object.keys(conversations).reverse();
+  ids.forEach(id=>{
+    const conv = conversations[id];
+    const item = document.createElement('div');
+    item.className = 'history-item' + (id===currentId ? ' active' : '');
+    item.innerHTML = `<span class="dot"></span><span>${escapeHtml(conv.title)}</span>`;
+    item.addEventListener('click', ()=> switchConversation(id));
+    list.appendChild(item);
+  });
+}
+
+function switchConversation(id){
+  currentId = id;
+  messageHistory = conversations[id].messages.slice();
+  renderHistory();
+  const chatInner = document.getElementById('chatInner');
+  chatInner.innerHTML = '';
+  if(messageHistory.length === 0){
+    renderEmptyState();
+  } else {
+    messageHistory.forEach(m => appendMessage(m.role, m.content, false));
+  }
+  scrollToBottom();
+}
+
+document.getElementById('newChatBtn').addEventListener('click', ()=>{
+  createConversation();
+  sidebar.classList.remove('open');
+});
+
+/* =========================================================
+   EMPTY STATE / RENDERING HELPERS
+   ========================================================= */
+function renderEmptyState(){
+  const chatInner = document.getElementById('chatInner');
+  chatInner.innerHTML = document.getElementById('emptyStateTemplate') ? '' : '';
+  chatInner.innerHTML = emptyStateHTML;
+  bindQuickCards();
+}
+const emptyStateHTML = document.getElementById('emptyState').outerHTML;
+
+function bindQuickCards(){
+  document.querySelectorAll('.quick-card, .chip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const prompt = el.getAttribute('data-prompt');
+      const input = document.getElementById('userInput');
+      input.value = prompt;
+      autoResize(input);
+      input.focus();
+    });
+  });
+}
+bindQuickCards();
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* very small markdown-ish renderer for assistant replies */
+function renderMarkdown(text){
+  let html = escapeHtml(text);
+  // code blocks
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, code)=>{
+    return `<pre><code>${code.replace(/\n$/,'')}</code></pre>`;
+  });
+  // inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // headings
+  html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.*)$/gm, '<h3>$1</h3>');
+  // numbered list
+  html = html.replace(/(^|\n)(\d+)\. (.*)/g, (m,pre,num,content)=> `${pre}<li>${content}</li>`);
+  // bullet list
+  html = html.replace(/(^|\n)[-•] (.*)/g, (m,pre,content)=> `${pre}<li>${content}</li>`);
+  // wrap consecutive <li> into <ul>
+  html = html.replace(/(<li>[\s\S]*?<\/li>)(\s*(?!<li>))/g, (m)=>{
+    return m;
+  });
+  html = html.replace(/(<li>.*?<\/li>(\s*<li>.*?<\/li>)*)/gs, '<ul>$1</ul>');
+  // paragraphs (double newline)
+  html = html.split(/\n\n+/).map(chunk=>{
+    if(/^<(h3|ul|pre)/.test(chunk.trim())) return chunk;
+    return `<p>${chunk.replace(/\n/g,'<br>')}</p>`;
+  }).join('');
+  return html;
+}
+
+function appendMessage(role, content, animate=true){
+  const chatInner = document.getElementById('chatInner');
+  const empty = document.getElementById('emptyState');
+  if(empty) empty.remove();
+
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + role;
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  msg.innerHTML = `
+    <div class="avatar ${role}">${role==='assistant' ? '✦' : 'You'}</div>
+    <div class="bubble-wrap">
+      <div class="bubble">${role==='assistant' ? renderMarkdown(content) : escapeHtml(content).replace(/\n/g,'<br>')}</div>
+      ${role==='assistant' ? `<div class="msg-actions">
+        <button class="mini-btn copy-btn" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
+      </div>` : `<div class="timestamp">${time}</div>`}
+    </div>
+  `;
+  if(!animate) msg.style.animation = 'none';
+  chatInner.appendChild(msg);
+
+  if(role==='assistant'){
+    const copyBtn = msg.querySelector('.copy-btn');
+    copyBtn.addEventListener('click', ()=>{
+      navigator.clipboard.writeText(content).then(()=> showToast('Copied to clipboard'));
+    });
+  }
+  return msg;
+}
+
+function scrollToBottom(){
+  const scroll = document.getElementById('chatScroll');
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+function showTyping(){
+  const chatInner = document.getElementById('chatInner');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg assistant';
+  wrap.id = 'typingMsg';
+  wrap.innerHTML = `
+    <div class="avatar assistant">✦</div>
+    <div class="bubble-wrap">
+      <div class="typing-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>
+    </div>`;
+  chatInner.appendChild(wrap);
+  scrollToBottom();
+}
+function removeTyping(){
+  const t = document.getElementById('typingMsg');
+  if(t) t.remove();
+}
+
+function showError(message, retryFn){
+  const chatInner = document.getElementById('chatInner');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg assistant';
+  wrap.innerHTML = `
+    <div class="avatar assistant">✦</div>
+    <div class="bubble-wrap">
+      <div class="error-card">
+        <div class="error-icon">!</div>
+        <div>
+          <h4>Something went wrong</h4>
+          <p>${escapeHtml(message)}</p>
+          <button class="retry-btn" id="retryBtn_${Date.now()}">Try again</button>
+        </div>
+      </div>
+    </div>`;
+  chatInner.appendChild(wrap);
+  const btn = wrap.querySelector('.retry-btn');
+  btn.addEventListener('click', ()=>{ wrap.remove(); retryFn(); });
+  scrollToBottom();
+}
+
+function showToast(text){
+  const toast = document.createElement('div');
+  toast.className = 'success-toast';
+  toast.innerHTML = `<span class="success-check">✓</span><span>${escapeHtml(text)}</span>`;
+  document.body.appendChild(toast);
+  setTimeout(()=> toast.remove(), 3200);
+}
+
+/* =========================================================
+   COMPOSER: textarea autosize, attachments, ripple, send
+   ========================================================= */
+const userInput = document.getElementById('userInput');
+function autoResize(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+}
+userInput.addEventListener('input', ()=> autoResize(userInput));
+userInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
+uploadBtn.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', ()=>{
+  Array.from(fileInput.files).forEach(f=> attachedFiles.push(f.name));
+  renderAttachments();
+  showToast('File ready — attached to your next message');
+});
+function renderAttachments(){
+  const row = document.getElementById('attachRow');
+  row.innerHTML = '';
+  attachedFiles.forEach((name, idx)=>{
+    const chip = document.createElement('div');
+    chip.className = 'attach-chip';
+    chip.innerHTML = `<span>📄 ${escapeHtml(name)}</span><button data-idx="${idx}">✕</button>`;
+    chip.querySelector('button').addEventListener('click', ()=>{
+      attachedFiles.splice(idx,1);
+      renderAttachments();
+    });
+    row.appendChild(chip);
+  });
+}
+
+const sendBtn = document.getElementById('sendBtn');
+sendBtn.addEventListener('click', (e)=>{
+  createRipple(e, sendBtn);
+  handleSend();
+});
+function createRipple(e, el){
+  const rect = el.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size+'px';
+  ripple.style.left = (e.clientX - rect.left - size/2)+'px';
+  ripple.style.top = (e.clientY - rect.top - size/2)+'px';
+  el.appendChild(ripple);
+  setTimeout(()=> ripple.remove(), 650);
+}
+
+/* =========================================================
+   SEND / CLAUDE API CALL
+   ========================================================= */
+let isSending = false;
+
+async function handleSend(){
+  const text = userInput.value.trim();
+  if(!text || isSending) return;
+
+  let fullText = text;
+  if(attachedFiles.length){
+    fullText += `\n\n[Attached files: ${attachedFiles.join(', ')}]`;
+  }
+
+  appendMessage('user', fullText);
+  messageHistory.push({role:'user', content: fullText});
+  conversations[currentId].messages = messageHistory.slice();
+  if(conversations[currentId].title === 'New conversation'){
+    conversations[currentId].title = text.slice(0,42) + (text.length>42?'…':'');
+    renderHistory();
+  }
+
+  userInput.value = '';
+  autoResize(userInput);
+  attachedFiles = [];
+  renderAttachments();
+  scrollToBottom();
+
+  await sendToClaude();
+}
+
+async function sendToClaude(){
+  isSending = true;
+  sendBtn.disabled = true;
+  showTyping();
+
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: messageHistory
+      })
+    });
+
+    if(!response.ok){
+      throw new Error("The assistant couldn't respond (status " + response.status + ").");
+    }
+
+    const data = await response.json();
+    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+    const replyText = textBlocks.join('\n\n') || "I couldn't generate a response for that — could you rephrase?";
+
+    removeTyping();
+    appendMessage('assistant', replyText);
+    messageHistory.push({role:'assistant', content: replyText});
+    conversations[currentId].messages = messageHistory.slice();
+    scrollToBottom();
+
+  }catch(err){
+    removeTyping();
+    showError(err.message || "Network error — please check your connection and try again.", sendToClaude);
+    scrollToBottom();
+  }finally{
+    isSending = false;
+    sendBtn.disabled = false;
+  }
+}
+
+/* Initial focus */
+userInput.focus();
+</script>
+</body>
+</html>

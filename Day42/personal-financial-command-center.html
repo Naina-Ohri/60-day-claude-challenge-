@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Financial Command Center</title>
+<style>
+:root{
+  --cream:#FAF6EF;
+  --peach:#FBDFCB;
+  --blush:#F6C9D0;
+  --lavender:#DCD3F0;
+  --sage:#CFE1CE;
+  --powder:#C9DCEA;
+  --beige:#EFE3D0;
+  --gold:#E3B873;
+  --ink:#3A3444;
+  --ink-soft:#6B6577;
+  --card-bg:rgba(255,255,255,0.55);
+  --card-border:rgba(255,255,255,0.7);
+  --shadow:0 8px 32px rgba(150,120,140,0.18);
+  --radius:22px;
+  --pos:#5E9C76;
+  --neg:#D97B78;
+  --bg-grad: linear-gradient(135deg,var(--cream),var(--peach) 35%,var(--lavender) 70%,var(--powder));
+  --text-on-dark:#F4EFE6;
+}
+[data-theme="dark"]{
+  --cream:#221F2B;
+  --peach:#2B2436;
+  --blush:#2E2530;
+  --lavender:#241F33;
+  --sage:#1F2A26;
+  --powder:#1E2530;
+  --beige:#2A2420;
+  --gold:#D9AE6D;
+  --ink:#F1ECE3;
+  --ink-soft:#C7C0D4;
+  --card-bg:rgba(40,36,52,0.55);
+  --card-border:rgba(255,255,255,0.08);
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+  --bg-grad: linear-gradient(135deg,#1B1824,#241F33 35%,#2B2436 70%,#1E2530);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg-grad);
+  background-attachment:fixed;
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  transition:background .5s ease,color .5s ease;
+  position:relative;
+}
+h1,h2,h3{font-family:'Georgia','Playfair Display',serif; letter-spacing:.3px;}
+.blob{
+  position:fixed; border-radius:50%; filter:blur(60px); opacity:.55; z-index:0; pointer-events:none;
+  animation:float 18s ease-in-out infinite;
+}
+.blob1{width:380px;height:380px;background:var(--blush);top:-100px;left:-100px;animation-delay:0s;}
+.blob2{width:320px;height:320px;background:var(--sage);bottom:-80px;right:-60px;animation-delay:3s;}
+.blob3{width:260px;height:260px;background:var(--lavender);top:40%;right:10%;animation-delay:6s;}
+.blob4{width:220px;height:220px;background:var(--gold);bottom:10%;left:15%;opacity:.35;animation-delay:9s;}
+@keyframes float{
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(30px,-40px) scale(1.08);}
+  66%{transform:translate(-20px,30px) scale(0.95);}
+}
+.glow{
+  position:fixed; width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,0.35),transparent 70%);
+  pointer-events:none; z-index:0; transition:transform .15s ease-out; mix-blend-mode:overlay;
+}
+[data-theme="dark"] .glow{mix-blend-mode:screen; background:radial-gradient(circle,rgba(255,255,255,0.08),transparent 70%);}
+
+.wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:24px 20px 80px;}
+
+/* Header */
+.topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:28px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(135deg,var(--gold),var(--blush));
+  display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow);
+}
+.brand h1{margin:0;font-size:1.5rem;color:var(--ink);}
+.brand p{margin:0;font-size:.78rem;color:var(--ink-soft);letter-spacing:.5px;text-transform:uppercase;}
+.topbar-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+button{font-family:inherit;cursor:pointer;border:none;outline:none;}
+.btn{
+  position:relative;overflow:hidden;
+  padding:11px 20px;border-radius:14px;font-size:.85rem;font-weight:600;
+  background:var(--card-bg); backdrop-filter:blur(14px); border:1px solid var(--card-border);
+  color:var(--ink); box-shadow:var(--shadow); transition:transform .2s ease, box-shadow .2s ease;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(150,120,140,0.25);}
+.btn:active{transform:translateY(0px) scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--blush));color:#4A3A2A;}
+[data-theme="dark"] .btn-primary{color:#2A2015;}
+.btn-ghost{background:transparent;}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.6);transform:scale(0);animation:rip .6s linear;pointer-events:none;}
+@keyframes rip{to{transform:scale(3);opacity:0;}}
+
+/* Cards / Glass */
+.card{
+  background:var(--card-bg); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--card-border); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:22px; transition:transform .35s ease, box-shadow .35s ease; animation:rise .6s ease both;
+}
+.card:hover{transform:translateY(-4px);box-shadow:0 16px 44px rgba(150,120,140,0.28);}
+@keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.card h2{margin:0 0 14px;font-size:1.1rem;display:flex;align-items:center;gap:8px;}
+.card h2 .ic{font-size:1.2rem;}
+
+.grid{display:grid;gap:20px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-2{grid-template-columns:2fr 1fr;}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-6-6{grid-template-columns:1fr 1fr;}
+@media(max-width:1000px){.grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} .grid-3{grid-template-columns:1fr;} .grid-6-6{grid-template-columns:1fr;}}
+@media(max-width:560px){.grid-4{grid-template-columns:1fr;}}
+
+section{margin-bottom:26px;}
+.section-title{font-size:1.05rem;margin:0 0 14px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+
+/* Stat cards */
+.stat-card{padding:20px;position:relative;overflow:hidden;}
+.stat-card .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);}
+.stat-card .value{font-size:1.6rem;font-weight:700;margin-top:6px;}
+.stat-card .sub{font-size:.75rem;margin-top:4px;color:var(--ink-soft);}
+.stat-income{background:linear-gradient(135deg,var(--sage),var(--card-bg));}
+.stat-expense{background:linear-gradient(135deg,var(--blush),var(--card-bg));}
+.stat-balance{background:linear-gradient(135deg,var(--powder),var(--card-bg));}
+.stat-health{background:linear-gradient(135deg,var(--gold),var(--card-bg));}
+
+/* Forms */
+.form-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+input,select{
+  font-family:inherit; padding:10px 14px;border-radius:12px;border:1px solid var(--card-border);
+  background:rgba(255,255,255,.5); color:var(--ink); font-size:.85rem; flex:1; min-width:120px;
+}
+[data-theme="dark"] input,[data-theme="dark"] select{background:rgba(0,0,0,.2);}
+input:focus,select:focus{outline:2px solid var(--gold);}
+
+table{width:100%;border-collapse:collapse;font-size:.85rem;}
+th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--card-border);}
+th{color:var(--ink-soft);font-weight:600;font-size:.75rem;text-transform:uppercase;}
+.tag{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;}
+.tag-income{background:var(--sage);color:#2E5B3F;}
+.tag-expense{background:var(--blush);color:#7A2E33;}
+.row-actions button{background:none;border:none;cursor:pointer;font-size:.9rem;padding:2px 6px;color:var(--ink-soft);}
+.row-actions button:hover{color:var(--neg);}
+.scroll-y{max-height:260px;overflow-y:auto;}
+.scroll-y::-webkit-scrollbar{width:6px;}
+.scroll-y::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:10px;}
+
+/* Progress bars */
+.pbar-wrap{margin-bottom:14px;}
+.pbar-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:5px;}
+.pbar-track{height:12px;border-radius:20px;background:rgba(0,0,0,.06);overflow:hidden;}
+[data-theme="dark"] .pbar-track{background:rgba(255,255,255,.08);}
+.pbar-fill{height:100%;border-radius:20px;width:0;transition:width 1.1s cubic-bezier(.2,.8,.2,1);background:linear-gradient(90deg,var(--gold),var(--blush));}
+.pbar-fill.over{background:linear-gradient(90deg,var(--neg),#B8514D);}
+
+/* Health score dial */
+.health-wrap{display:flex;align-items:center;gap:18px;}
+.health-tips{font-size:.8rem;color:var(--ink-soft);line-height:1.5;}
+
+.chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.chip{padding:6px 12px;border-radius:16px;font-size:.75rem;background:rgba(255,255,255,.5);border:1px solid var(--card-border);}
+[data-theme="dark"] .chip{background:rgba(255,255,255,.06);}
+
+.insight-item, .tip-item{
+  display:flex;gap:10px;padding:12px;border-radius:14px;background:rgba(255,255,255,.4);margin-bottom:10px;font-size:.85rem;line-height:1.5;
+  border-left:4px solid var(--gold);
+}
+[data-theme="dark"] .insight-item,[data-theme="dark"] .tip-item{background:rgba(255,255,255,.05);}
+.insight-item .ic,.tip-item .ic{font-size:1.1rem;}
+
+.footer-note{text-align:center;color:var(--ink-soft);font-size:.75rem;margin-top:40px;}
+
+canvas{max-width:100%;}
+
+.calc-result{
+  margin-top:14px;padding:16px;border-radius:16px;background:linear-gradient(135deg,var(--sage),var(--powder));
+  font-size:.9rem;line-height:1.6;
+}
+[data-theme="dark"] .calc-result{background:linear-gradient(135deg,#1F2A26,#1E2530);}
+
+.empty-state{text-align:center;padding:20px;color:var(--ink-soft);font-size:.85rem;}
+
+@media print{
+  .no-print{display:none !important;}
+  body{background:white !important;}
+  .card{box-shadow:none;border:1px solid #ddd;background:white;backdrop-filter:none;}
+  .blob,.glow{display:none;}
+}
+</style>
+</head>
+<body data-theme="light">
+
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+<div class="blob blob4"></div>
+<div class="glow" id="glow"></div>
+
+<div class="wrap">
+  <div class="topbar no-print">
+    <div class="brand">
+      <div class="brand-mark">💰</div>
+      <div>
+        <h1>Personal Financial Command Center</h1>
+        <p>Your money, mapped &amp; managed</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" id="themeToggle">🌙 Dark Mode</button>
+      <button class="btn" id="printBtn">🖨️ Printable Report</button>
+      <button class="btn" id="resetBtn">♻️ Reset Data</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section>
+    <h2 class="section-title">📊 Dashboard Overview</h2>
+    <div class="grid grid-4">
+      <div class="card stat-card stat-income">
+        <div class="label">Total Income</div>
+        <div class="value" id="statIncome">₹0</div>
+        <div class="sub">This month</div>
+      </div>
+      <div class="card stat-card stat-expense">
+        <div class="label">Total Expenses</div>
+        <div class="value" id="statExpense">₹0</div>
+        <div class="sub">This month</div>
+      </div>
+      <div class="card stat-card stat-balance">
+        <div class="label">Net Balance</div>
+        <div class="value" id="statBalance">₹0</div>
+        <div class="sub" id="statBalanceSub">Keep it up!</div>
+      </div>
+      <div class="card stat-card stat-health">
+        <div class="label">Financial Health</div>
+        <div class="value" id="statHealth">0/100</div>
+        <div class="sub" id="statHealthSub">Getting started</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INCOME / EXPENSE TRACKER -->
+  <section>
+    <h2 class="section-title">📝 Monthly Income &amp; Expense Tracker</h2>
+    <div class="card">
+      <div class="form-row">
+        <select id="txnType">
+          <option value="income">Income</option>
+          <option value="expense" selected>Expense</option>
+        </select>
+        <select id="txnCategory"></select>
+        <input type="text" id="txnDesc" placeholder="Description (e.g. Canteen food)">
+        <input type="number" id="txnAmount" placeholder="Amount ₹" min="0">
+        <input type="date" id="txnDate">
+        <button class="btn btn-primary" id="addTxnBtn">+ Add Entry</button>
+      </div>
+      <div class="scroll-y">
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead>
+          <tbody id="txnTableBody"></tbody>
+        </table>
+        <div class="empty-state" id="txnEmpty">No entries yet — add your first income or expense above ☝️</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUDGET PLANNER + SAVINGS GOAL -->
+  <section>
+    <div class="grid grid-2">
+      <div class="card">
+        <h2><span class="ic">🧮</span> Budget Planner</h2>
+        <div class="form-row">
+          <select id="budgetCategory"></select>
+          <input type="number" id="budgetAmount" placeholder="Monthly limit ₹" min="0">
+          <button class="btn btn-primary" id="addBudgetBtn">Set Budget</button>
+        </div>
+        <div id="budgetBars"></div>
+      </div>
+      <div class="card">
+        <h2><span class="ic">🎯</span> Savings Goal Tracker</h2>
+        <div class="form-row">
+          <input type="text" id="goalName" placeholder="Goal name (e.g. New Laptop)">
+          <input type="number" id="goalTarget" placeholder="Target ₹" min="0">
+        </div>
+        <div class="form-row">
+          <input type="number" id="goalSaved" placeholder="Already saved ₹" min="0">
+          <button class="btn btn-primary" id="addGoalBtn">Save Goal</button>
+        </div>
+        <div id="goalBars"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HEALTH SCORE + CHARTS -->
+  <section>
+    <div class="grid grid-2">
+      <div class="card">
+        <h2><span class="ic">❤️</span> Financial Health Score</h2>
+        <div class="health-wrap">
+          <canvas id="healthDial" width="150" height="150"></canvas>
+          <div class="health-tips" id="healthBreakdown"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2><span class="ic">🥧</span> Spending by Category</h2>
+        <canvas id="pieChart" width="320" height="240"></canvas>
+        <div class="chip-list" id="pieLegend"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2><span class="ic">📈</span> Expense Trend (Last entries)</h2>
+      <canvas id="lineChart" width="1100" height="260"></canvas>
+    </div>
+  </section>
+
+  <!-- AI INSIGHTS + WHAT IF -->
+  <section>
+    <div class="grid grid-2">
+      <div class="card">
+        <h2><span class="ic">🤖</span> AI Financial Insights</h2>
+        <div id="aiInsights"></div>
+      </div>
+      <div class="card">
+        <h2><span class="ic">🔮</span> What-if Savings Calculator</h2>
+        <div class="form-row">
+          <input type="number" id="whatifCut" placeholder="Reduce monthly spend by ₹" min="0">
+          <input type="number" id="whatifMonths" placeholder="Number of months" min="1" value="12">
+          <button class="btn btn-primary" id="whatifBtn">Calculate</button>
+        </div>
+        <div class="calc-result" id="whatifResult">Enter values above to see how small cuts grow into big savings 🌱</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SMART TIPS -->
+  <section>
+    <h2 class="section-title">💡 Smart Money Tips</h2>
+    <div class="grid grid-3" id="tipsGrid"></div>
+  </section>
+
+  <div class="footer-note">Made for the 60-Day AI Challenge · All data stored locally on your device · No internet required</div>
+</div>
+
+<script>
+/* ============ STATE ============ */
+const CATEGORIES = ["Food","Travel","Rent","Shopping","Education","Entertainment","Bills","Health","Savings","Other"];
+const STORAGE_KEY = "pfcc_data_v1";
+
+let state = loadState();
+
+function defaultState(){
+  return {
+    theme:"light",
+    txns:[],
+    budgets:{},
+    goals:[]
+  };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return {...defaultState(), ...parsed};
+  }catch(e){ return defaultState(); }
+}
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* ============ INIT UI ============ */
+function populateSelects(){
+  const txnCat = document.getElementById('txnCategory');
+  const budCat = document.getElementById('budgetCategory');
+  [txnCat, budCat].forEach(sel=>{
+    sel.innerHTML = CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  });
+}
+populateSelects();
+
+document.getElementById('txnDate').valueAsDate = new Date();
+
+/* Theme */
+function applyTheme(){
+  document.body.setAttribute('data-theme', state.theme);
+  document.getElementById('themeToggle').textContent = state.theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+}
+applyTheme();
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  state.theme = state.theme === 'light' ? 'dark' : 'light';
+  saveState();
+  applyTheme();
+  renderAll();
+});
+
+/* Mouse glow */
+const glow = document.getElementById('glow');
+document.addEventListener('mousemove', e=>{
+  glow.style.transform = `translate(${e.clientX-210}px, ${e.clientY-210}px)`;
+});
+
+/* Ripple effect on buttons */
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('.btn');
+  if(!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className='ripple';
+  ripple.style.left = (e.clientX-rect.left)+'px';
+  ripple.style.top = (e.clientY-rect.top)+'px';
+  btn.appendChild(ripple);
+  setTimeout(()=>ripple.remove(),650);
+});
+
+/* Reset */
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(confirm('This will erase all your financial data stored on this device. Continue?')){
+    state = defaultState();
+    saveState();
+    renderAll();
+  }
+});
+
+/* Print */
+document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+/* ============ TRANSACTIONS ============ */
+document.getElementById('addTxnBtn').addEventListener('click', ()=>{
+  const type = document.getElementById('txnType').value;
+  const category = document.getElementById('txnCategory').value;
+  const desc = document.getElementById('txnDesc').value.trim() || category;
+  const amount = parseFloat(document.getElementById('txnAmount').value);
+  const date = document.getElementById('txnDate').value || new Date().toISOString().slice(0,10);
+  if(!amount || amount<=0){ alert('Please enter a valid amount.'); return; }
+  state.txns.push({id:Date.now(), type, category, desc, amount, date});
+  saveState();
+  document.getElementById('txnDesc').value='';
+  document.getElementById('txnAmount').value='';
+  renderAll();
+});
+
+function deleteTxn(id){
+  state.txns = state.txns.filter(t=>t.id!==id);
+  saveState();
+  renderAll();
+}
+function renderTxns(){
+  const body = document.getElementById('txnTableBody');
+  const empty = document.getElementById('txnEmpty');
+  const sorted = [...state.txns].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  body.innerHTML = sorted.map(t=>`
+    <tr>
+      <td>${formatDate(t.date)}</td>
+      <td><span class="tag ${t.type==='income'?'tag-income':'tag-expense'}">${t.type}</span></td>
+      <td>${t.category}</td>
+      <td>${escapeHtml(t.desc)}</td>
+      <td>${t.type==='income'?'+':'-'}₹${t.amount.toLocaleString('en-IN')}</td>
+      <td class="row-actions"><button onclick="deleteTxn(${t.id})" title="Delete">🗑️</button></td>
+    </tr>
+  `).join('');
+  empty.style.display = sorted.length ? 'none' : 'block';
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatDate(d){
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+}
+
+/* ============ CALCULATIONS ============ */
+function totals(){
+  const income = state.txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = state.txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  return {income, expense, balance: income-expense};
+}
+function expenseByCategory(){
+  const map = {};
+  state.txns.filter(t=>t.type==='expense').forEach(t=>{
+    map[t.category] = (map[t.category]||0) + t.amount;
+  });
+  return map;
+}
+
+/* ============ DASHBOARD ============ */
+function renderDashboard(){
+  const {income, expense, balance} = totals();
+  document.getElementById('statIncome').textContent = '₹'+income.toLocaleString('en-IN');
+  document.getElementById('statExpense').textContent = '₹'+expense.toLocaleString('en-IN');
+  document.getElementById('statBalance').textContent = '₹'+balance.toLocaleString('en-IN');
+  document.getElementById('statBalanceSub').textContent = balance>=0 ? 'Positive cash flow 👍' : 'Spending more than earning ⚠️';
+
+  const score = computeHealthScore();
+  document.getElementById('statHealth').textContent = score+'/100';
+  document.getElementById('statHealthSub').textContent = score>=75?'Excellent 🌟': score>=50?'Good, room to grow 🌱': score>=25?'Needs attention ⚠️':'Critical — act now 🚨';
+}
+
+/* ============ BUDGET PLANNER ============ */
+document.getElementById('addBudgetBtn').addEventListener('click', ()=>{
+  const cat = document.getElementById('budgetCategory').value;
+  const amt = parseFloat(document.getElementById('budgetAmount').value);
+  if(!amt || amt<=0){ alert('Enter a valid budget amount.'); return; }
+  state.budgets[cat] = amt;
+  saveState();
+  document.getElementById('budgetAmount').value='';
+  renderAll();
+});
+function renderBudgets(){
+  const wrap = document.getElementById('budgetBars');
+  const spend = expenseByCategory();
+  const cats = Object.keys(state.budgets);
+  if(!cats.length){ wrap.innerHTML = '<div class="empty-state">No budgets set yet. Add a category limit above.</div>'; return; }
+  wrap.innerHTML = cats.map(cat=>{
+    const limit = state.budgets[cat];
+    const spent = spend[cat]||0;
+    const pct = Math.min(100, (spent/limit)*100);
+    const over = spent>limit;
+    return `
+      <div class="pbar-wrap">
+        <div class="pbar-label"><span>${cat}</span><span>₹${spent.toLocaleString('en-IN')} / ₹${limit.toLocaleString('en-IN')}</span></div>
+        <div class="pbar-track"><div class="pbar-fill ${over?'over':''}" style="width:${pct}%"></div></div>
+      </div>`;
+  }).join('');
+}
+
+/* ============ SAVINGS GOALS ============ */
+document.getElementById('addGoalBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('goalName').value.trim();
+  const target = parseFloat(document.getElementById('goalTarget').value);
+  const saved = parseFloat(document.getElementById('goalSaved').value) || 0;
+  if(!name || !target || target<=0){ alert('Enter a goal name and valid target amount.'); return; }
+  state.goals.push({id:Date.now(), name, target, saved});
+  saveState();
+  document.getElementById('goalName').value='';
+  document.getElementById('goalTarget').value='';
+  document.getElementById('goalSaved').value='';
+  renderAll();
+});
+function deleteGoal(id){
+  state.goals = state.goals.filter(g=>g.id!==id);
+  saveState();
+  renderAll();
+}
+function renderGoals(){
+  const wrap = document.getElementById('goalBars');
+  if(!state.goals.length){ wrap.innerHTML = '<div class="empty-state">No savings goals yet. Set one above!</div>'; return; }
+  wrap.innerHTML = state.goals.map(g=>{
+    const pct = Math.min(100, (g.saved/g.target)*100);
+    return `
+      <div class="pbar-wrap">
+        <div class="pbar-label"><span>${escapeHtml(g.name)} <button onclick="deleteGoal(${g.id})" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);">✕</button></span><span>₹${g.saved.toLocaleString('en-IN')} / ₹${g.target.toLocaleString('en-IN')}</span></div>
+        <div class="pbar-track"><div class="pbar-fill" style="width:${pct}%"></div></div>
+      </div>`;
+  }).join('');
+}
+
+/* ============ HEALTH SCORE ============ */
+function computeHealthScore(){
+  const {income, expense} = totals();
+  if(income===0 && expense===0) return 0;
+  let score = 50;
+  if(income>0){
+    const savingsRate = (income-expense)/income;
+    score += savingsRate*40; // -40..+40
+  } else {
+    score -= 30;
+  }
+  const overBudgetCats = Object.keys(state.budgets).filter(c=>{
+    const spend = expenseByCategory()[c]||0;
+    return spend > state.budgets[c];
+  }).length;
+  score -= overBudgetCats*8;
+  const goalProgress = state.goals.length ? state.goals.reduce((s,g)=>s+Math.min(1,g.saved/g.target),0)/state.goals.length : 0;
+  score += goalProgress*10;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+function drawHealthDial(){
+  const canvas = document.getElementById('healthDial');
+  const ctx = canvas.getContext('2d');
+  const score = computeHealthScore();
+  const cx=75, cy=75, r=60;
+  ctx.clearRect(0,0,150,150);
+  ctx.lineWidth=14;
+  ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--card-border');
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+
+  const grad = ctx.createLinearGradient(0,0,150,150);
+  grad.addColorStop(0, score>=50?'#E3B873':'#D97B78');
+  grad.addColorStop(1, score>=50?'#F6C9D0':'#B8514D');
+  ctx.strokeStyle = grad;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  const end = -Math.PI/2 + (Math.PI*2)*(score/100);
+  ctx.arc(cx,cy,r,-Math.PI/2, end);
+  ctx.stroke();
+
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--ink');
+  ctx.font = '700 26px Poppins, sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(score, cx, cy-6);
+  ctx.font = '400 11px Poppins, sans-serif';
+  ctx.fillText('/ 100', cx, cy+16);
+
+  const bd = document.getElementById('healthBreakdown');
+  const {income, expense} = totals();
+  const savingsRate = income>0 ? Math.round(((income-expense)/income)*100) : 0;
+  bd.innerHTML = `
+    <div>💰 Savings rate: <strong>${savingsRate}%</strong> of income</div>
+    <div style="margin-top:6px;">📌 Budgets exceeded: <strong>${Object.keys(state.budgets).filter(c=>(expenseByCategory()[c]||0)>state.budgets[c]).length}</strong></div>
+    <div style="margin-top:6px;">🎯 Avg goal progress: <strong>${state.goals.length ? Math.round(state.goals.reduce((s,g)=>s+Math.min(1,g.saved/g.target),0)/state.goals.length*100):0}%</strong></div>
+  `;
+}
+
+/* ============ PIE CHART ============ */
+const PALETTE = ['#E3B873','#F6C9D0','#DCD3F0','#CFE1CE','#C9DCEA','#EFE3D0','#D97B78','#B7A6D9','#9CC7A1','#E7A9C0'];
+function drawPie(){
+  const canvas = document.getElementById('pieChart');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const data = expenseByCategory();
+  const cats = Object.keys(data);
+  const legend = document.getElementById('pieLegend');
+  if(!cats.length){
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--ink-soft');
+    ctx.font='14px Poppins'; ctx.textAlign='center';
+    ctx.fillText('No expenses logged yet', canvas.width/2, canvas.height/2);
+    legend.innerHTML='';
+    return;
+  }
+  const total = cats.reduce((s,c)=>s+data[c],0);
+  let start = -Math.PI/2;
+  const cx = canvas.width/2, cy = canvas.height/2, r = 90;
+  cats.forEach((cat,i)=>{
+    const slice = (data[cat]/total)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+slice);
+    ctx.closePath();
+    ctx.fillStyle = PALETTE[i%PALETTE.length];
+    ctx.fill();
+    start += slice;
+  });
+  // inner circle donut effect
+  ctx.beginPath(); ctx.arc(cx,cy,45,0,Math.PI*2);
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--cream');
+  ctx.fill();
+
+  legend.innerHTML = cats.map((c,i)=>`<span class="chip" style="border-left:10px solid ${PALETTE[i%PALETTE.length]}">${c}: ₹${data[c].toLocaleString('en-IN')}</span>`).join('');
+}
+
+/* ============ LINE CHART ============ */
+function drawLine(){
+  const canvas = document.getElementById('lineChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const expenses = [...state.txns].filter(t=>t.type==='expense').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const inkSoft = getComputedStyle(document.body).getPropertyValue('--ink-soft');
+  const gridColor = getComputedStyle(document.body).getPropertyValue('--card-border');
+  const pad = 40;
+  ctx.strokeStyle = gridColor; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y = pad + (H-pad*2)*i/4;
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke();
+  }
+  if(expenses.length<2){
+    ctx.fillStyle = inkSoft; ctx.font='14px Poppins'; ctx.textAlign='center';
+    ctx.fillText('Add at least 2 expenses to see the trend', W/2, H/2);
+    return;
+  }
+  const recent = expenses.slice(-15);
+  const max = Math.max(...recent.map(t=>t.amount), 1);
+  const stepX = (W-pad*2)/(recent.length-1);
+  ctx.beginPath();
+  recent.forEach((t,i)=>{
+    const x = pad + stepX*i;
+    const y = H-pad - (t.amount/max)*(H-pad*2);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#E3B873'); grad.addColorStop(1,'#F6C9D0');
+  ctx.strokeStyle = grad; ctx.lineWidth=3; ctx.lineJoin='round'; ctx.stroke();
+
+  // area fill
+  ctx.lineTo(pad+stepX*(recent.length-1), H-pad);
+  ctx.lineTo(pad, H-pad);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(227,184,115,0.15)';
+  ctx.fill();
+
+  // points
+  recent.forEach((t,i)=>{
+    const x = pad + stepX*i;
+    const y = H-pad - (t.amount/max)*(H-pad*2);
+    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle = '#D97B78'; ctx.fill();
+  });
+
+  ctx.fillStyle = inkSoft; ctx.font='11px Poppins'; ctx.textAlign='center';
+  recent.forEach((t,i)=>{
+    if(i%2===0 || recent.length<8){
+      const x = pad + stepX*i;
+      ctx.fillText(formatDate(t.date), x, H-pad+16);
+    }
+  });
+}
+
+/* ============ AI INSIGHTS ============ */
+function generateInsights(){
+  const {income, expense, balance} = totals();
+  const byCat = expenseByCategory();
+  const insights = [];
+  if(income===0 && expense===0){
+    insights.push({ic:'👋', text:'Welcome! Start by adding your income and expenses to unlock personalized AI insights.'});
+    return insights;
+  }
+  if(income>0){
+    const rate = ((income-expense)/income)*100;
+    if(rate>=30) insights.push({ic:'🌟', text:`Great job! You're saving ${rate.toFixed(0)}% of your income — well above the recommended 20% benchmark.`});
+    else if(rate>=10) insights.push({ic:'👍', text:`You're saving ${rate.toFixed(0)}% of your income. Try nudging this toward 20% for stronger long-term security.`});
+    else if(rate>=0) insights.push({ic:'⚠️', text:`Your savings rate is only ${rate.toFixed(0)}%. Small daily cuts in discretionary spending can help build a buffer.`});
+    else insights.push({ic:'🚨', text:`You're spending ₹${Math.abs(balance).toLocaleString('en-IN')} more than you earn this period. Review your top categories below.`});
+  }
+  const sortedCats = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  if(sortedCats.length){
+    const [topCat, topAmt] = sortedCats[0];
+    const share = expense>0 ? ((topAmt/expense)*100).toFixed(0) : 0;
+    insights.push({ic:'🔍', text:`"${topCat}" is your biggest expense category at ₹${topAmt.toLocaleString('en-IN')} (${share}% of total spending).`});
+  }
+  Object.keys(state.budgets).forEach(cat=>{
+    const spent = byCat[cat]||0;
+    const limit = state.budgets[cat];
+    if(spent>limit) insights.push({ic:'📛', text:`You've exceeded your "${cat}" budget by ₹${(spent-limit).toLocaleString('en-IN')}. Consider trimming this category next month.`});
+    else if(spent > limit*0.85) insights.push({ic:'⏳', text:`You're close to your "${cat}" budget limit — ${(100-((limit-spent)/limit*100)).toFixed(0)}% used already.`});
+  });
+  state.goals.forEach(g=>{
+    const pct = (g.saved/g.target)*100;
+    if(pct>=100) insights.push({ic:'🏆', text:`Congratulations! You've fully funded your "${g.name}" goal.`});
+    else if(pct<20 && g.target>0) insights.push({ic:'🐢', text:`Your "${g.name}" goal is only ${pct.toFixed(0)}% funded. Even ₹500/week adds up faster than you think.`});
+  });
+  if(insights.length<2) insights.push({ic:'📅', text:'Keep logging entries daily — the more data you add, the smarter these insights become.'});
+  return insights.slice(0,6);
+}
+function renderInsights(){
+  const wrap = document.getElementById('aiInsights');
+  const insights = generateInsights();
+  wrap.innerHTML = insights.map(i=>`<div class="insight-item"><span class="ic">${i.ic}</span><span>${i.text}</span></div>`).join('');
+}
+
+/* ============ WHAT-IF CALCULATOR ============ */
+document.getElementById('whatifBtn').addEventListener('click', ()=>{
+  const cut = parseFloat(document.getElementById('whatifCut').value);
+  const months = parseInt(document.getElementById('whatifMonths').value) || 12;
+  const resBox = document.getElementById('whatifResult');
+  if(!cut || cut<=0){ resBox.textContent = 'Enter a valid monthly amount to simulate.'; return; }
+  const totalSaved = cut*months;
+  const withInterest = cut * (( (Math.pow(1.005, months) - 1) / 0.005 )); // ~6% annual, monthly compounding approx
+  resBox.innerHTML = `
+    Cutting <strong>₹${cut.toLocaleString('en-IN')}/month</strong> for <strong>${months} months</strong>:<br>
+    💵 Simple savings: <strong>₹${Math.round(totalSaved).toLocaleString('en-IN')}</strong><br>
+    📈 With ~6% p.a. returns (e.g. a recurring deposit / index fund): <strong>₹${Math.round(withInterest).toLocaleString('en-IN')}</strong><br>
+    <span style="font-size:.78rem;color:var(--ink-soft);">That's the power of consistent small habits, student life edition 🎓</span>
+  `;
+});
+
+/* ============ SMART TIPS ============ */
+const ALL_TIPS = [
+  {ic:'☕', text:'Track small daily spends like chai and snacks — they silently add up to thousands each month.'},
+  {ic:'🏦', text:'Automate a fixed amount into savings right after you receive pocket money or a stipend.'},
+  {ic:'📚', text:'Use student discounts on software, transport, and food apps — every rupee saved counts.'},
+  {ic:'🍱', text:'Meal-prepping or mess food over frequent ordering can cut food expenses by 30–40%.'},
+  {ic:'💳', text:'Avoid impulsive online purchases — wait 24 hours before buying anything non-essential.'},
+  {ic:'📱', text:'Review subscriptions monthly and cancel the ones you rarely use.'},
+  {ic:'🎯', text:'Set one clear savings goal at a time — vague goals are easy to abandon.'},
+  {ic:'📊', text:'Follow the 50/30/20 rule: 50% needs, 30% wants, 20% savings, adapted to student income.'},
+  {ic:'🚌', text:'Choose public transport or shared rides over cabs where possible to save monthly costs.'},
+];
+function renderTips(){
+  const wrap = document.getElementById('tipsGrid');
+  wrap.innerHTML = ALL_TIPS.map(t=>`<div class="card tip-item" style="flex-direction:column;"><span class="ic">${t.ic}</span><span>${t.text}</span></div>`).join('');
+}
+
+/* ============ RENDER ALL ============ */
+function renderAll(){
+  renderTxns();
+  renderDashboard();
+  renderBudgets();
+  renderGoals();
+  drawHealthDial();
+  drawPie();
+  drawLine();
+  renderInsights();
+  renderTips();
+}
+window.addEventListener('resize', ()=>{ drawPie(); drawLine(); drawHealthDial(); });
+renderAll();
+</script>
+</body>
+</html>

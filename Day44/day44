@@ -1,0 +1,33 @@
+# Day 44 – AI-Powered LinkedIn Profile Optimizer
+
+## Overview
+
+Built an interactive **AI-Powered LinkedIn Profile Optimizer** using Claude. The application analyzes a LinkedIn profile, provides structured feedback, suggests improvements, and presents personalized recommendations through a polished interactive interface.
+
+---
+
+## Generated HTML Application
+
+- linkedin-optimizer.html
+
+---
+
+## Screenshots
+
+- ss1
+- ss2
+- ss3
+- ss4
+- ss5
+- ss6
+- Dark mode
+
+---
+
+## Key Learnings
+
+- Learned how AI can evaluate different sections of a LinkedIn profile and identify areas for improvement.
+- Understood how profile optimization, keyword selection, and personal branding influence recruiter visibility.
+- Explored how structured scoring and actionable recommendations can make career feedback easier to understand.
+- Improved my understanding of designing professional dashboard-style interfaces using HTML, CSS, and JavaScript.
+- Learned how interactive web applications can present career insights in a user-friendly and engaging way.

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Decision Strategist</title>
+<style>
+  :root{
+    --lavender:#c9b8f0;
+    --lavender-deep:#9d84d6;
+    --blue:#b8d4f0;
+    --pink:#f5c6d8;
+    --mint:#bdeee0;
+    --cream:#faf6ef;
+    --ink:#3a3450;
+    --ink-soft:#6b6483;
+    --glass:rgba(255,255,255,0.55);
+    --glass-border:rgba(255,255,255,0.75);
+    --shadow:0 10px 40px rgba(120,100,170,0.15);
+    --radius:22px;
+    --bg1:var(--cream);
+    --bg2:#eee7f7;
+    --text:var(--ink);
+    --text-soft:var(--ink-soft);
+    --card:var(--glass);
+    --card-border:var(--glass-border);
+    --good:#7fbf9e;
+    --bad:#e78c9a;
+    --warn:#e8b96b;
+  }
+  [data-theme="dark"]{
+    --ink:#eee9fb;
+    --ink-soft:#b6adcf;
+    --glass:rgba(40,34,66,0.55);
+    --glass-border:rgba(120,105,170,0.35);
+    --shadow:0 10px 40px rgba(0,0,0,0.4);
+    --bg1:#211c33;
+    --bg2:#171325;
+    --text:#eee9fb;
+    --text-soft:#b6adcf;
+    --card:var(--glass);
+    --card-border:var(--glass-border);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: radial-gradient(circle at 10% 10%, var(--bg2), var(--bg1) 60%);
+    color:var(--text);
+    min-height:100vh;
+    transition: background .5s ease, color .4s ease;
+    position:relative;
+    overflow-x:hidden;
+  }
+  .orb{
+    position:fixed; border-radius:50%; filter:blur(60px); opacity:.5; z-index:0; pointer-events:none;
+    animation: float 18s ease-in-out infinite;
+  }
+  .orb1{width:340px;height:340px;background:var(--lavender);top:-100px;left:-100px;}
+  .orb2{width:280px;height:280px;background:var(--pink);top:40%;right:-120px;animation-delay:3s;}
+  .orb3{width:260px;height:260px;background:var(--mint);bottom:-100px;left:20%;animation-delay:6s;}
+  @keyframes float{
+    0%,100%{transform:translateY(0) translateX(0);}
+    50%{transform:translateY(-40px) translateX(30px);}
+  }
+  h1,h2,h3{font-family:'Segoe UI Semibold','Segoe UI',sans-serif; letter-spacing:-0.02em;}
+  .wrap{position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:28px 20px 80px;}
+
+  header.top{
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; gap:16px; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-mark{
+    width:44px;height:44px;border-radius:14px;
+    background:linear-gradient(135deg,var(--lavender),var(--pink));
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+    box-shadow: var(--shadow);
+  }
+  .brand-name{font-size:1.15rem;font-weight:700;}
+  .brand-sub{font-size:.75rem;color:var(--text-soft);margin-top:-2px;}
+  .top-actions{display:flex; gap:10px; align-items:center;}
+  .icon-btn{
+    background:var(--card); border:1px solid var(--card-border); backdrop-filter: blur(14px);
+    border-radius:14px; padding:10px 14px; cursor:pointer; color:var(--text); font-size:.85rem;
+    transition: transform .2s ease, box-shadow .2s ease;
+    display:flex; align-items:center; gap:6px;
+  }
+  .icon-btn:hover{ transform:translateY(-2px); box-shadow:var(--shadow); }
+
+  .progress-shell{
+    background:var(--card); border:1px solid var(--card-border); border-radius:20px; padding:18px 22px;
+    backdrop-filter: blur(16px); box-shadow:var(--shadow); margin-bottom:30px;
+  }
+  .progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:.85rem;color:var(--text-soft);}
+  .progress-track{height:10px;border-radius:8px;background:rgba(150,140,190,0.2);overflow:hidden;}
+  .progress-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--lavender-deep),var(--pink));width:0%;transition:width 1s ease;}
+
+  .glass-card{
+    background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius);
+    padding:26px; backdrop-filter: blur(18px); box-shadow: var(--shadow);
+    margin-bottom:26px; position:relative; overflow:hidden;
+    animation: rise .6s ease both;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+  .section-eyebrow{
+    font-size:.72rem; text-transform:uppercase; letter-spacing:.14em; color:var(--lavender-deep);
+    font-weight:700; margin-bottom:6px;
+  }
+  .section-title{font-size:1.35rem; margin:0 0 16px;}
+
+  /* Decision overview */
+  .overview-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;}
+  .stat{background:rgba(255,255,255,0.35); border-radius:16px; padding:16px 18px; border:1px solid var(--card-border);}
+  [data-theme="dark"] .stat{background:rgba(255,255,255,0.04);}
+  .stat-label{font-size:.75rem; color:var(--text-soft); margin-bottom:6px;}
+  .stat-value{font-size:1.4rem; font-weight:700;}
+
+  /* Matrix */
+  .matrix-table{width:100%; border-collapse:separate; border-spacing:0 10px;}
+  .matrix-table th{text-align:left; font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text-soft); padding:0 10px 6px;}
+  .matrix-table td{padding:10px; vertical-align:middle;}
+  .matrix-row{background:rgba(255,255,255,0.3); border-radius:14px;}
+  [data-theme="dark"] .matrix-row{background:rgba(255,255,255,0.03);}
+  .opt-name{font-weight:700; font-size:.95rem;}
+  .opt-tag{font-size:.7rem; color:var(--text-soft);}
+  .bar-track{height:12px; border-radius:8px; background:rgba(150,140,190,0.18); overflow:hidden; width:100%; min-width:140px;}
+  .bar-fill{height:100%; border-radius:8px; width:0; transition:width 1.4s cubic-bezier(.2,.8,.2,1);}
+  .score-num{font-weight:700; margin-left:8px; font-size:.85rem;}
+
+  /* Pros cons */
+  .pc-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px;}
+  .pc-card{border-radius:18px; padding:18px; border:1px solid var(--card-border); background:rgba(255,255,255,0.32);}
+  [data-theme="dark"] .pc-card{background:rgba(255,255,255,0.03);}
+  .pc-card h4{margin:0 0 10px; font-size:1rem;}
+  .pc-list{list-style:none; margin:0; padding:0; font-size:.85rem;}
+  .pc-list li{margin-bottom:8px; padding-left:20px; position:relative; color:var(--text-soft);}
+  .pc-list li.pro::before{content:"✓"; position:absolute; left:0; color:var(--good); font-weight:700;}
+  .pc-list li.con::before{content:"✕"; position:absolute; left:0; color:var(--bad); font-weight:700;}
+
+  /* Assumption / bias / risk cards */
+  .flag-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;}
+  .flag-card{border-radius:16px; padding:16px; border:1px solid var(--card-border); background:rgba(255,255,255,0.32); cursor:pointer; transition:transform .2s ease;}
+  [data-theme="dark"] .flag-card{background:rgba(255,255,255,0.03);}
+  .flag-card:hover{transform:translateY(-4px);}
+  .flag-badge{display:inline-block; font-size:.68rem; padding:3px 10px; border-radius:20px; margin-bottom:8px; font-weight:700;}
+  .badge-low{background:var(--mint); color:#1e5a44;}
+  .badge-med{background:var(--warn); color:#5a3d0e;}
+  .badge-high{background:var(--pink); color:#7a1f3a;}
+  .flag-title{font-weight:700; font-size:.9rem; margin-bottom:4px;}
+  .flag-desc{font-size:.8rem; color:var(--text-soft);}
+
+  /* Timeline */
+  .timeline{position:relative; padding-left:30px;}
+  .timeline::before{content:""; position:absolute; left:9px; top:6px; bottom:6px; width:2px; background:linear-gradient(var(--lavender),var(--pink));}
+  .tl-item{position:relative; margin-bottom:22px;}
+  .tl-dot{position:absolute; left:-30px; top:2px; width:20px; height:20px; border-radius:50%; background:var(--card); border:2px solid var(--lavender-deep); display:flex; align-items:center; justify-content:center; font-size:.6rem;}
+  .tl-date{font-size:.72rem; color:var(--text-soft); margin-bottom:2px;}
+  .tl-title{font-weight:700; font-size:.9rem;}
+  .tl-desc{font-size:.82rem; color:var(--text-soft);}
+
+  /* What-if cards */
+  .whatif-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+  .whatif-card{border-radius:18px; padding:18px; border:1px solid var(--card-border); background:linear-gradient(135deg, rgba(201,184,240,0.25), rgba(245,198,216,0.2));}
+  .whatif-card h4{margin:0 0 8px; font-size:.95rem;}
+  .whatif-card p{font-size:.82rem; color:var(--text-soft); margin:0 0 10px;}
+  .whatif-shift{font-size:.78rem; font-weight:700;}
+  .shift-up{color:var(--good);} .shift-down{color:var(--bad);}
+
+  /* Recommendation & verdict */
+  .verdict-box{
+    background:linear-gradient(135deg, var(--lavender), var(--pink));
+    border-radius:20px; padding:26px; color:#2b2440; text-align:center;
+  }
+  [data-theme="dark"] .verdict-box{color:#fff;}
+  .verdict-winner{font-size:1.6rem; font-weight:800; margin:6px 0;}
+  .verdict-sub{font-size:.85rem; opacity:.85;}
+  .confidence-ring{margin:16px auto 0; width:110px; height:110px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem;
+    background: conic-gradient(#2b2440 0% 82%, rgba(255,255,255,0.35) 82% 100%);
+  }
+  .confidence-inner{width:86px; height:86px; border-radius:50%; background:var(--cream); display:flex; align-items:center; justify-content:center;}
+  [data-theme="dark"] .confidence-inner{background:#221c34; color:#fff;}
+
+  .reco-list{display:grid; gap:12px;}
+  .reco-item{display:flex; gap:12px; padding:14px; border-radius:14px; background:rgba(255,255,255,0.32); border:1px solid var(--card-border);}
+  [data-theme="dark"] .reco-item{background:rgba(255,255,255,0.03);}
+  .reco-num{font-weight:800; color:var(--lavender-deep);}
+
+  /* Share cards */
+  .share-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;}
+  .share-card{border-radius:18px; padding:20px; text-align:center; color:#2b2440; position:relative; overflow:hidden;}
+  .share-card h4{margin:6px 0; font-size:1rem;}
+  .share-card p{font-size:.78rem; opacity:.8; margin:0;}
+  .share-1{background:linear-gradient(160deg,var(--lavender),var(--blue));}
+  .share-2{background:linear-gradient(160deg,var(--pink),var(--cream));}
+  .share-3{background:linear-gradient(160deg,var(--mint),var(--blue));}
+  .share-btn{margin-top:10px; font-size:.72rem; background:rgba(255,255,255,0.5); border:none; padding:6px 14px; border-radius:20px; cursor:pointer; font-weight:700;}
+
+  footer.actions{display:flex; justify-content:center; gap:14px; margin-top:10px;}
+  .primary-btn{
+    background:linear-gradient(135deg,var(--lavender-deep),#d68fb0); color:#fff; border:none;
+    padding:14px 28px; border-radius:16px; font-weight:700; cursor:pointer; font-size:.9rem;
+    box-shadow:var(--shadow); transition:transform .2s ease;
+  }
+  .primary-btn:hover{transform:translateY(-3px);}
+
+  @media print{
+    .no-print{display:none !important;}
+    body{background:#fff; color:#000;}
+    .glass-card{box-shadow:none; border:1px solid #ddd; break-inside:avoid;}
+  }
+  @media (max-width:600px){
+    .verdict-winner{font-size:1.2rem;}
+  }
+</style>
+</head>
+<body data-theme="light">
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="wrap">
+  <header class="top no-print">
+    <div class="brand">
+      <div class="brand-mark">🧭</div>
+      <div>
+        <div class="brand-name">AI Decision Strategist</div>
+        <div class="brand-sub">Career Decision Dashboard</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" onclick="toggleTheme()">🌗 <span id="themeLabel">Dark mode</span></button>
+      <button class="icon-btn" onclick="window.print()">🖨️ Print report</button>
+    </div>
+  </header>
+
+  <div class="progress-shell no-print">
+    <div class="progress-top">
+      <span>Decision analysis progress</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- Decision Overview -->
+  <section class="glass-card" id="overview">
+    <div class="section-eyebrow">Decision Overview</div>
+    <h2 class="section-title">Choosing your internship offer</h2>
+    <p style="color:var(--text-soft); font-size:.9rem; margin-top:-8px;">
+      You're a B.Tech IT student evaluating three internship offers. This dashboard breaks the decision
+      down across scoring, risk, bias, and long-term trajectory — so the choice is reasoned, not rushed.
+    </p>
+    <div class="overview-grid">
+      <div class="stat"><div class="stat-label">Options compared</div><div class="stat-value">3</div></div>
+      <div class="stat"><div class="stat-label">Decision window</div><div class="stat-value">3 weeks</div></div>
+      <div class="stat"><div class="stat-label">Top factor</div><div class="stat-value">Learning curve</div></div>
+      <div class="stat"><div class="stat-label">Confidence</div><div class="stat-value" id="overviewConfidence">82%</div></div>
+    </div>
+  </section>
+
+  <!-- Decision Matrix -->
+  <section class="glass-card" id="matrix">
+    <div class="section-eyebrow">Weighted Scoring</div>
+    <h2 class="section-title">Decision Matrix</h2>
+    <table class="matrix-table">
+      <thead><tr><th>Option</th><th>Score</th><th></th></tr></thead>
+      <tbody id="matrixBody"></tbody>
+    </table>
+  </section>
+
+  <!-- Pros & Cons -->
+  <section class="glass-card" id="proscons">
+    <div class="section-eyebrow">Side by Side</div>
+    <h2 class="section-title">Pros &amp; Cons Comparison</h2>
+    <div class="pc-grid" id="pcGrid"></div>
+  </section>
+
+  <!-- Assumption Checker -->
+  <section class="glass-card" id="assumptions">
+    <div class="section-eyebrow">Sanity Check</div>
+    <h2 class="section-title">Assumption Checker</h2>
+    <div class="flag-grid" id="assumptionGrid"></div>
+  </section>
+
+  <!-- Bias Detection -->
+  <section class="glass-card" id="bias">
+    <div class="section-eyebrow">Cognitive Awareness</div>
+    <h2 class="section-title">Bias Detection</h2>
+    <div class="flag-grid" id="biasGrid"></div>
+  </section>
+
+  <!-- Risk Analysis -->
+  <section class="glass-card" id="risk">
+    <div class="section-eyebrow">Downside Scan</div>
+    <h2 class="section-title">Risk Analysis</h2>
+    <div class="flag-grid" id="riskGrid"></div>
+  </section>
+
+  <!-- Opportunity Analysis -->
+  <section class="glass-card" id="opportunity">
+    <div class="section-eyebrow">Upside Scan</div>
+    <h2 class="section-title">Opportunity Analysis</h2>
+    <div class="flag-grid" id="oppGrid"></div>
+  </section>
+
+  <!-- Timeline -->
+  <section class="glass-card" id="timeline">
+    <div class="section-eyebrow">Path Forward</div>
+    <h2 class="section-title">Decision Timeline</h2>
+    <div class="timeline" id="timelineList"></div>
+  </section>
+
+  <!-- What-if -->
+  <section class="glass-card" id="whatif">
+    <div class="section-eyebrow">Scenario Testing</div>
+    <h2 class="section-title">What-if Simulation</h2>
+    <div class="whatif-grid" id="whatifGrid"></div>
+  </section>
+
+  <!-- AI Recommendations -->
+  <section class="glass-card" id="recommendations">
+    <div class="section-eyebrow">Guidance</div>
+    <h2 class="section-title">AI Recommendations</h2>
+    <div class="reco-list" id="recoList"></div>
+  </section>
+
+  <!-- Final Verdict -->
+  <section class="glass-card" id="verdict">
+    <div class="section-eyebrow">Conclusion</div>
+    <h2 class="section-title">Final Verdict</h2>
+    <div class="verdict-box">
+      <div class="verdict-sub">Recommended choice</div>
+      <div class="verdict-winner" id="verdictWinner">—</div>
+      <div class="verdict-sub" id="verdictReason">—</div>
+      <div class="confidence-ring"><div class="confidence-inner" id="confidenceInner">82%</div></div>
+    </div>
+  </section>
+
+  <!-- Decision Summary -->
+  <section class="glass-card" id="summary">
+    <div class="section-eyebrow">TL;DR</div>
+    <h2 class="section-title">Decision Summary</h2>
+    <p id="summaryText" style="font-size:.9rem; color:var(--text-soft); line-height:1.6;"></p>
+  </section>
+
+  <!-- Shareable Cards -->
+  <section class="glass-card no-print" id="share">
+    <div class="section-eyebrow">Export</div>
+    <h2 class="section-title">Shareable Cards</h2>
+    <div class="share-grid" id="shareGrid"></div>
+  </section>
+
+  <footer class="actions no-print">
+    <button class="primary-btn" onclick="saveDecision()">💾 Save decision</button>
+    <button class="primary-btn" onclick="window.print()">📄 Export printable report</button>
+  </footer>
+</div>
+
+<script>
+/* ---------- DATA ---------- */
+const options = [
+  {
+    name:"Product-based Startup",
+    tag:"SDE Intern · Series B Startup",
+    score:84,
+    color:"linear-gradient(90deg,#9d84d6,#c9b8f0)",
+    pros:["Fast ownership of real features","Modern tech stack (React, Node, AWS)","Direct mentorship from senior engineers","Strong PPO track record (60%)"],
+    cons:["High pressure, longer hours","Compensation slightly below MNC","Startup survival risk"]
+  },
+  {
+    name:"MNC (Service-based)",
+    tag:"Systems Engineer Intern · Tier-1 IT giant",
+    score:71,
+    color:"linear-gradient(90deg,#7fa8d6,#b8d4f0)",
+    pros:["Brand name value for placements","Structured training program","Stable stipend & job security","Good work-life balance"],
+    cons:["Slower learning curve","Legacy tech stack","Less ownership, more process-heavy"]
+  },
+  {
+    name:"Research Internship",
+    tag:"AI/ML Research Intern · University Lab",
+    score:77,
+    color:"linear-gradient(90deg,#e8a9c2,#f5c6d8)",
+    pros:["Strong for higher studies / MS","Publication & paper co-authorship","Deep specialization in AI/ML","Great for research-oriented placements"],
+    cons:["Low/no stipend","Less relevant if targeting core SDE roles","Narrower skill breadth"]
+  }
+];
+
+const assumptions = [
+  {level:"high", title:"\"Startups always mean more learning\"", desc:"True only if the team actively mentors interns — verify via alumni reviews, not brand perception."},
+  {level:"med", title:"\"MNC brand guarantees placement\"", desc:"Brand helps resumes, but interview performance and skills still decide final offers."},
+  {level:"low", title:"\"Research internship closes SDE doors\"", desc:"Mostly false — many research interns still crack SDE roles if they keep DSA practice active."}
+];
+
+const biases = [
+  {level:"high", title:"Prestige Bias", desc:"Leaning toward the MNC purely for its recognizable name rather than actual role fit."},
+  {level:"med", title:"Recency Bias", desc:"Overweighting the most recent conversation with a senior who praised the startup."},
+  {level:"low", title:"Sunk Cost Bias", desc:"Feeling obligated toward an offer because of time spent in that interview process."}
+];
+
+const risks = [
+  {level:"high", title:"Startup instability", desc:"Series B startups can pivot or downsize; intern-to-full-time conversion isn't guaranteed."},
+  {level:"med", title:"Slow skill growth (MNC)", desc:"Structured but repetitive projects may not build a strong portfolio for future interviews."},
+  {level:"low", title:"Stipend gap (Research)", desc:"Lower or no stipend during the internship period, manageable short-term."}
+];
+
+const opportunities = [
+  {level:"high", title:"Ownership & portfolio (Startup)", desc:"Real shipped features become strong talking points in interviews and resumes."},
+  {level:"med", title:"Network & brand (MNC)", desc:"Alumni network and brand recognition open doors in referral-driven hiring."},
+  {level:"med", title:"Higher studies pathway (Research)", desc:"Publications strengthen MS/PhD applications and specialised AI roles."}
+];
+
+const timelineData = [
+  {date:"Week 1", title:"Gather full details", desc:"Confirm stipend, tech stack, mentor structure, and PPO conversion rate for each offer.", icon:"📋"},
+  {date:"Week 1-2", title:"Talk to alumni/interns", desc:"Get first-hand feedback from 2-3 people who interned at each organisation recently.", icon:"💬"},
+  {date:"Week 2", title:"Run the what-if scenarios", desc:"Stress-test each option against your 2-year career goal, not just the next 3 months.", icon:"🧪"},
+  {date:"Week 3", title:"Decide & commit", desc:"Lock the decision, inform the other companies professionally, and prep onboarding.", icon:"✅"}
+];
+
+const whatifs = [
+  {title:"What if you prioritise learning speed?", desc:"Ownership and modern stack push the startup ahead of the pack.", shift:"Startup +9 pts", dir:"up"},
+  {title:"What if you prioritise brand for on-campus placements?", desc:"MNC's recognisable name gives a resume screening edge.", shift:"MNC +6 pts", dir:"up"},
+  {title:"What if you're targeting an MS abroad?", desc:"Research internship's publication potential becomes decisive.", shift:"Research +12 pts", dir:"up"},
+  {title:"What if the startup faces funding issues?", desc:"Its risk-adjusted score drops meaningfully.", shift:"Startup -14 pts", dir:"down"}
+];
+
+const recommendations = [
+  "Prioritise roles where you'll ship real, demoable work — it matters more for interviews than company size.",
+  "Before deciding, message 2 current/past interns at each company directly for unfiltered feedback.",
+  "If undecided, pick based on your 2-year goal (SDE vs Research vs Corporate) rather than short-term comfort.",
+  "Whatever you choose, keep DSA and system design practice running in parallel — no internship replaces that."
+];
+
+/* ---------- RENDER ---------- */
+function renderMatrix(){
+  const body = document.getElementById('matrixBody');
+  body.innerHTML = options.map(o=>`
+    <tr class="matrix-row">
+      <td>
+        <div class="opt-name">${o.name}</div>
+        <div class="opt-tag">${o.tag}</div>
+      </td>
+      <td style="width:55%;">
+        <div class="bar-track"><div class="bar-fill" data-target="${o.score}" style="background:${o.color}"></div></div>
+      </td>
+      <td><span class="score-num">${o.score}/100</span></td>
+    </tr>
+  `).join('');
+}
+
+function renderProsCons(){
+  const grid = document.getElementById('pcGrid');
+  grid.innerHTML = options.map(o=>`
+    <div class="pc-card">
+      <h4>${o.name}</h4>
+      <ul class="pc-list">
+        ${o.pros.map(p=>`<li class="pro">${p}</li>`).join('')}
+        ${o.cons.map(c=>`<li class="con">${c}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
+
+function badgeClass(level){ return level==="high" ? "badge-high" : level==="med" ? "badge-med" : "badge-low"; }
+function badgeLabel(level){ return level==="high" ? "High" : level==="med" ? "Medium" : "Low"; }
+
+function renderFlags(containerId, data){
+  document.getElementById(containerId).innerHTML = data.map(d=>`
+    <div class="flag-card">
+      <span class="flag-badge ${badgeClass(d.level)}">${badgeLabel(d.level)}</span>
+      <div class="flag-title">${d.title}</div>
+      <div class="flag-desc">${d.desc}</div>
+    </div>
+  `).join('');
+}
+
+function renderTimeline(){
+  document.getElementById('timelineList').innerHTML = timelineData.map(t=>`
+    <div class="tl-item">
+      <div class="tl-dot">${t.icon}</div>
+      <div class="tl-date">${t.date}</div>
+      <div class="tl-title">${t.title}</div>
+      <div class="tl-desc">${t.desc}</div>
+    </div>
+  `).join('');
+}
+
+function renderWhatif(){
+  document.getElementById('whatifGrid').innerHTML = whatifs.map(w=>`
+    <div class="whatif-card">
+      <h4>${w.title}</h4>
+      <p>${w.desc}</p>
+      <div class="whatif-shift ${w.dir==='up'?'shift-up':'shift-down'}">${w.dir==='up'?'▲':'▼'} ${w.shift}</div>
+    </div>
+  `).join('');
+}
+
+function renderRecommendations(){
+  document.getElementById('recoList').innerHTML = recommendations.map((r,i)=>`
+    <div class="reco-item">
+      <div class="reco-num">${String(i+1).padStart(2,'0')}</div>
+      <div>${r}</div>
+    </div>
+  `).join('');
+}
+
+function renderVerdict(){
+  const winner = options.reduce((a,b)=> b.score>a.score ? b : a);
+  document.getElementById('verdictWinner').textContent = winner.name;
+  document.getElementById('verdictReason').textContent =
+    `Highest overall score (${winner.score}/100) — best balance of learning, ownership and long-term leverage.`;
+  document.getElementById('confidenceInner').textContent = "82%";
+
+  document.getElementById('summaryText').textContent =
+    `Across scoring, risk, and opportunity analysis, ${winner.name} comes out ahead for a B.Tech IT student `+
+    `optimising for skill growth and portfolio strength before placements. The other two options remain strong `+
+    `contenders depending on whether the priority shifts toward brand recognition or research pathways — `+
+    `revisit the what-if simulations above if your goals change.`;
+}
+
+function renderShare(){
+  const shareClasses = ["share-1","share-2","share-3"];
+  document.getElementById('shareGrid').innerHTML = options.map((o,i)=>`
+    <div class="share-card ${shareClasses[i]}">
+      <div style="font-size:1.6rem;">${i===0?'🚀':i===1?'🏢':'🔬'}</div>
+      <h4>${o.name}</h4>
+      <p>Score: ${o.score}/100</p>
+      <button class="share-btn" onclick="copyCard('${o.name.replace(/'/g,"")}', ${o.score})">Copy summary</button>
+    </div>
+  `).join('');
+}
+
+function copyCard(name, score){
+  const text = `AI Decision Strategist — ${name}: ${score}/100. Analysed via Decision Matrix, Risk & Opportunity scan.`;
+  navigator.clipboard?.writeText(text);
+  alert("Copied to clipboard:\n\n"+text);
+}
+
+function animateBars(){
+  document.querySelectorAll('.bar-fill').forEach(bar=>{
+    const target = bar.getAttribute('data-target');
+    requestAnimationFrame(()=>{ bar.style.width = target+"%"; });
+  });
+}
+
+/* ---------- THEME ---------- */
+function applyTheme(theme){
+  document.body.setAttribute('data-theme', theme);
+  document.getElementById('themeLabel').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+  localStorage.setItem('ads-theme', theme);
+}
+function toggleTheme(){
+  const current = document.body.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+/* ---------- PROGRESS ---------- */
+function updateProgress(){
+  const sections = document.querySelectorAll('.glass-card');
+  let visible = 0;
+  const rect = window.innerHeight;
+  sections.forEach(s=>{
+    const top = s.getBoundingClientRect().top;
+    if(top < rect*0.85) visible++;
+  });
+  const pct = Math.min(100, Math.round((visible/sections.length)*100));
+  document.getElementById('progressFill').style.width = pct+"%";
+  document.getElementById('progressPct').textContent = pct+"%";
+  localStorage.setItem('ads-progress', pct);
+}
+
+/* ---------- SAVE ---------- */
+function saveDecision(){
+  const payload = { savedAt: new Date().toISOString(), options, verdict: options.reduce((a,b)=> b.score>a.score?b:a).name };
+  localStorage.setItem('ads-decision', JSON.stringify(payload));
+  alert("Decision snapshot saved locally ✅");
+}
+
+/* ---------- INIT ---------- */
+window.addEventListener('DOMContentLoaded', ()=>{
+  const savedTheme = localStorage.getItem('ads-theme') || 'light';
+  applyTheme(savedTheme);
+
+  renderMatrix();
+  renderProsCons();
+  renderFlags('assumptionGrid', assumptions);
+  renderFlags('biasGrid', biases);
+  renderFlags('riskGrid', risks);
+  renderFlags('oppGrid', opportunities);
+  renderTimeline();
+  renderWhatif();
+  renderRecommendations();
+  renderVerdict();
+  renderShare();
+
+  setTimeout(animateBars, 300);
+  updateProgress();
+  window.addEventListener('scroll', updateProgress);
+});
+</script>
+</body>
+</html>

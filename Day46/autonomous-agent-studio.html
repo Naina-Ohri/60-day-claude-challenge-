@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autonomous Agent Studio — Code Review Assistant</title>
+<style>
+:root{
+  --bg1:#f6f3ff; --bg2:#fef4f8; --bg3:#eef7ff;
+  --card:#ffffffcc; --card-border:#ffffff80;
+  --text:#241f3d; --text-dim:#665f85;
+  --accent1:#8b7cf6; --accent2:#f19bd9; --accent3:#7cc8f6;
+  --good:#3ecf8e; --warn:#f6b93b; --bad:#f2607a;
+  --shadow: 0 8px 32px rgba(80,60,150,0.12);
+  --radius:20px;
+}
+[data-theme="dark"]{
+  --bg1:#161029; --bg2:#1c1436; --bg3:#12172e;
+  --card:#241d3ecc; --card-border:#3a3160a0;
+  --text:#f1edff; --text-dim:#a79fd1;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background: linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  transition:background .4s ease,color .4s ease;
+}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.blob{
+  position:fixed; border-radius:50%; filter:blur(70px); opacity:.35; z-index:0; pointer-events:none;
+  animation:float 18s ease-in-out infinite;
+}
+.blob1{width:420px;height:420px; background:var(--accent1); top:-100px; left:-100px;}
+.blob2{width:380px;height:380px; background:var(--accent2); bottom:-120px; right:-80px; animation-delay:-6s;}
+.blob3{width:300px;height:300px; background:var(--accent3); top:40%; left:60%; animation-delay:-12s;}
+@keyframes float{
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(40px,-30px) scale(1.08);}
+  66%{transform:translate(-30px,20px) scale(0.95);}
+}
+
+.app{display:flex; min-height:100vh; position:relative; z-index:1;}
+
+/* Sidebar */
+.sidebar{
+  width:250px; padding:24px 16px; display:flex; flex-direction:column; gap:6px;
+  backdrop-filter:blur(20px); background:var(--card); border-right:1px solid var(--card-border);
+  position:sticky; top:0; height:100vh;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:8px 12px 22px;}
+.brand-logo{
+  width:38px; height:38px; border-radius:12px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow);
+}
+.brand-name{font-weight:800; font-size:16px; letter-spacing:-0.02em;}
+.brand-sub{font-size:11px; color:var(--text-dim); margin-top:-2px;}
+
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:14px;
+  cursor:pointer; font-size:14px; font-weight:600; color:var(--text-dim);
+  transition:all .2s ease; border:1px solid transparent; background:none;
+}
+.nav-item svg{width:18px;height:18px; flex-shrink:0;}
+.nav-item:hover{background:var(--card); color:var(--text);}
+.nav-item.active{
+  background:linear-gradient(135deg,var(--accent1)22,var(--accent2)22);
+  color:var(--text); border-color:var(--card-border); box-shadow:var(--shadow);
+}
+.sidebar-footer{margin-top:auto; display:flex; flex-direction:column; gap:8px;}
+
+.theme-toggle{
+  display:flex; align-items:center; justify-content:space-between; padding:10px 14px;
+  border-radius:14px; background:var(--card); border:1px solid var(--card-border); cursor:pointer;
+  font-size:13px; font-weight:600;
+}
+.switch{width:38px; height:22px; border-radius:20px; background:linear-gradient(135deg,var(--accent1),var(--accent2)); position:relative; cursor:pointer;}
+.switch::after{content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform .25s ease; box-shadow:0 1px 4px rgba(0,0,0,.3);}
+[data-theme="dark"] .switch::after{transform:translateX(16px);}
+
+/* Main */
+.main{flex:1; padding:28px 34px; max-width:calc(100vw - 250px);}
+.topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; flex-wrap:wrap; gap:12px;}
+.page-title{font-size:26px; font-weight:800; letter-spacing:-0.02em;}
+.page-sub{color:var(--text-dim); font-size:13.5px; margin-top:3px;}
+
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:14px;
+  border:1px solid var(--card-border); font-weight:600; font-size:13.5px; cursor:pointer;
+  background:var(--card); color:var(--text); transition:all .2s ease; backdrop-filter:blur(10px);
+}
+.btn svg{width:16px;height:16px;}
+.btn:hover{transform:translateY(-2px); box-shadow:var(--shadow);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:#fff; border:none;
+}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+
+.view{display:none; animation:fadein .4s ease;}
+.view.active{display:block;}
+@keyframes fadein{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+.grid{display:grid; gap:18px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-2{grid-template-columns:2fr 1fr;}
+@media(max-width:1000px){.grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;}}
+@media(max-width:640px){.grid-4{grid-template-columns:1fr;}}
+
+.card{
+  background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius);
+  padding:22px; box-shadow:var(--shadow); backdrop-filter:blur(20px);
+}
+.card h3{font-size:14.5px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+.card h3 svg{width:17px;height:17px; color:var(--accent1);}
+
+.stat-card{display:flex; flex-direction:column; gap:8px;}
+.stat-icon{width:38px;height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent1)33,var(--accent2)33);}
+.stat-icon svg{width:19px;height:19px; color:var(--accent1);}
+.stat-value{font-size:26px; font-weight:800; letter-spacing:-0.02em;}
+.stat-label{font-size:12.5px; color:var(--text-dim); font-weight:600;}
+.stat-trend{font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:8px; width:fit-content;}
+.trend-up{background:var(--good)22; color:var(--good);}
+.trend-flat{background:var(--text-dim)22; color:var(--text-dim);}
+
+/* Workflow graph */
+.workflow-wrap{overflow-x:auto; padding:6px;}
+.workflow-svg{width:100%; min-width:760px; height:260px;}
+.wnode{transition:all .3s ease;}
+.wnode-circle{fill:var(--card); stroke:var(--card-border); stroke-width:2; transition:all .3s ease;}
+.wnode.active .wnode-circle{stroke:var(--accent1); stroke-width:3; filter:drop-shadow(0 0 12px var(--accent1));}
+.wnode.done .wnode-circle{fill:var(--good)22; stroke:var(--good);}
+.wnode-label{font-size:11px; font-weight:700; fill:var(--text); text-anchor:middle;}
+.wnode-sub{font-size:9px; fill:var(--text-dim); text-anchor:middle;}
+.wedge{stroke:var(--card-border); stroke-width:2; fill:none;}
+.wedge.active{stroke:var(--accent1); stroke-dasharray:6 4; animation:dash 1s linear infinite;}
+@keyframes dash{to{stroke-dashoffset:-20;}}
+.pulse-ring{fill:none; stroke:var(--accent1); stroke-width:2; opacity:0;}
+.wnode.active .pulse-ring{animation:pulse 1.6s ease-out infinite;}
+@keyframes pulse{0%{r:26; opacity:.7;} 100%{r:44; opacity:0;}}
+
+/* Logs */
+.log-entry{
+  display:flex; gap:10px; padding:10px 12px; border-radius:12px; font-size:12.5px;
+  border-bottom:1px solid var(--card-border);
+}
+.log-entry:last-child{border-bottom:none;}
+.log-tag{font-weight:700; padding:2px 8px; border-radius:8px; font-size:10.5px; height:fit-content; white-space:nowrap;}
+.tag-planner{background:#8b7cf622; color:#8b7cf6;}
+.tag-executor{background:#7cc8f622; color:#3b9cd9;}
+.tag-evaluator{background:#f19bd922; color:#d15aa8;}
+.tag-critic{background:#f6b93b22; color:#c98a1d;}
+.tag-improver{background:#3ecf8e22; color:#2ba873;}
+.tag-memory{background:#a78bfa22; color:#8b5cf6;}
+.tag-safety{background:#f2607a22; color:#e0345a;}
+.tag-final{background:#241d3e22; color:var(--text);}
+.tag-system{background:var(--text-dim)22; color:var(--text-dim);}
+.log-msg{flex:1; color:var(--text-dim);}
+.log-time{font-size:10.5px; color:var(--text-dim); white-space:nowrap;}
+
+.search-box{
+  display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--card-border);
+  border-radius:12px; padding:9px 14px; margin-bottom:14px;
+}
+.search-box input{background:none; border:none; outline:none; color:var(--text); font-size:13px; width:100%; font-family:inherit;}
+.search-box svg{width:16px;height:16px; color:var(--text-dim);}
+
+.log-list{max-height:400px; overflow-y:auto;}
+.log-list::-webkit-scrollbar{width:6px;}
+.log-list::-webkit-scrollbar-thumb{background:var(--card-border); border-radius:10px;}
+
+.badge{padding:3px 10px; border-radius:10px; font-size:11px; font-weight:700;}
+.badge-idle{background:var(--text-dim)22; color:var(--text-dim);}
+.badge-running{background:var(--warn)22; color:var(--warn);}
+.badge-done{background:var(--good)22; color:var(--good);}
+
+.progress-bar{height:8px; border-radius:8px; background:var(--card-border); overflow:hidden; margin-top:6px;}
+.progress-fill{height:100%; background:linear-gradient(90deg,var(--accent1),var(--accent2)); border-radius:8px; transition:width .6s cubic-bezier(.4,0,.2,1);}
+
+.agent-card{display:flex; flex-direction:column; gap:10px;}
+.agent-header{display:flex; align-items:center; gap:10px;}
+.agent-avatar{width:36px;height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.agent-avatar svg{width:18px;height:18px; color:#fff;}
+.agent-name{font-weight:700; font-size:14px;}
+.agent-role{font-size:11.5px; color:var(--text-dim);}
+.agent-prompt{
+  font-size:12px; color:var(--text-dim); background:var(--bg3); padding:12px; border-radius:12px;
+  line-height:1.6; max-height:150px; overflow-y:auto; font-family:'Menlo','Consolas',monospace; font-size:11.3px;
+}
+[data-theme="dark"] .agent-prompt{background:#00000030;}
+
+.round-pill{
+  display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px;
+  background:var(--card); border:1px solid var(--card-border); font-size:12.5px; font-weight:700; margin-right:8px; margin-bottom:8px;
+}
+.round-pill .dot{width:7px;height:7px; border-radius:50%;}
+.dot-good{background:var(--good);}
+.dot-warn{background:var(--warn);}
+.dot-bad{background:var(--bad);}
+
+.iteration-row{
+  display:grid; grid-template-columns:60px 1fr 90px; gap:12px; align-items:center;
+  padding:12px; border-radius:14px; background:var(--bg3); margin-bottom:8px;
+}
+[data-theme="dark"] .iteration-row{background:#00000025;}
+.iteration-round{font-weight:800; font-size:15px; color:var(--accent1);}
+.iteration-score{font-weight:800; font-size:16px; text-align:right;}
+
+.code-block{
+  background:#1a1530; color:#e4dfff; border-radius:14px; padding:16px; font-family:'Menlo','Consolas',monospace;
+  font-size:12px; line-height:1.6; overflow-x:auto; white-space:pre;
+}
+
+.memory-item{display:flex; gap:10px; padding:12px; border-radius:12px; background:var(--bg3); margin-bottom:8px; font-size:12.5px;}
+[data-theme="dark"] .memory-item{background:#00000025;}
+.memory-icon{width:28px;height:28px; border-radius:9px; background:var(--accent1)22; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.memory-icon svg{width:14px;height:14px; color:var(--accent1);}
+
+.toast-wrap{position:fixed; bottom:24px; right:24px; z-index:999; display:flex; flex-direction:column; gap:10px;}
+.toast{
+  background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:14px 18px;
+  box-shadow:var(--shadow); backdrop-filter:blur(20px); display:flex; align-items:center; gap:10px;
+  font-size:13px; font-weight:600; min-width:260px; animation:slidein .3s ease;
+}
+@keyframes slidein{from{transform:translateX(120%); opacity:0;} to{transform:translateX(0); opacity:1;}}
+.toast-icon{width:22px;height:22px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.toast-icon svg{width:13px;height:13px; color:#fff;}
+.toast.success .toast-icon{background:var(--good);}
+.toast.error .toast-icon{background:var(--bad);}
+.toast.info .toast-icon{background:var(--accent1);}
+
+.settings-row{display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--card-border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{font-size:13.5px; font-weight:600;}
+.settings-sub{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
+
+input[type=range]{-webkit-appearance:none; width:140px; height:6px; border-radius:6px; background:var(--card-border); outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:linear-gradient(135deg,var(--accent1),var(--accent2)); cursor:pointer;}
+
+textarea.task-input{
+  width:100%; min-height:90px; border-radius:14px; border:1px solid var(--card-border); background:var(--bg3);
+  color:var(--text); padding:14px; font-family:inherit; font-size:13.5px; resize:vertical; outline:none;
+}
+[data-theme="dark"] textarea.task-input{background:#00000025;}
+
+.loading-dots span{display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent1); margin:0 2px; animation:bounce 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:.15s;}
+.loading-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0); opacity:.5;} 30%{transform:translateY(-6px); opacity:1;}}
+
+.empty-state{text-align:center; padding:50px 20px; color:var(--text-dim);}
+.empty-state svg{width:44px; height:44px; margin-bottom:12px; opacity:.5;}
+
+@media(max-width:900px){
+  .sidebar{position:fixed; z-index:50; transform:translateX(-100%); transition:transform .3s ease;}
+  .sidebar.open{transform:translateX(0);}
+  .main{max-width:100vw; padding:20px;}
+  .menu-btn{display:flex !important;}
+}
+.menu-btn{display:none; align-items:center; justify-content:center; width:38px; height:38px; border-radius:12px; background:var(--card); border:1px solid var(--card-border); cursor:pointer;}
+</style>
+</head>
+<body data-theme="light">
+
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Agent Studio</div>
+        <div class="brand-sub">Code Review Assistant</div>
+      </div>
+    </div>
+
+    <button class="nav-item active" data-view="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" data-view="agents">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>
+      Agents
+    </button>
+    <button class="nav-item" data-view="execution">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Execution
+    </button>
+    <button class="nav-item" data-view="memory">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 015 5c0 2-1 3-1 5v2H8v-2c0-2-1-3-1-5a5 5 0 015-5z"/><path d="M9 21h6M10 18h4"/></svg>
+      Memory
+    </button>
+    <button class="nav-item" data-view="logs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1"/></svg>
+      Logs
+    </button>
+    <button class="nav-item" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 008.6 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2a2 2 0 010-4h.09A1.65 1.65 0 003.6 8.6a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H8a1.65 1.65 0 001-1.51V2a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V8c.36.51.9.86 1.51 1H22a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" id="exportBtn" style="border:1px solid var(--card-border);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Report
+      </button>
+      <div class="theme-toggle" id="themeToggle">
+        <span id="themeLabel">Light mode</span>
+        <div class="switch"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="menu-btn" id="menuBtn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div>
+          <div class="page-title" id="pageTitle">Dashboard</div>
+          <div class="page-sub" id="pageSub">Live overview of your Code Review Assistant pipeline</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn" id="resetBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+          Reset Workflow
+        </button>
+        <button class="btn btn-primary" id="runBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run Pipeline
+        </button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div class="view active" id="view-dashboard">
+      <div class="grid grid-4" style="margin-bottom:18px;">
+        <div class="card stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7v8l10-12h-7V2z"/></svg></div>
+          <div class="stat-value" id="statStatus">Idle</div>
+          <div class="stat-label">Pipeline Status</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg></div>
+          <div class="stat-value" id="statRound">0 / 8</div>
+          <div class="stat-label">Current Round</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
+          <div class="stat-value" id="statScore">0%</div>
+          <div class="stat-label">Quality Score</div>
+          <div class="stat-trend trend-flat" id="scoreTrend">Not started</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <div class="stat-value" id="statTime">0.0s</div>
+          <div class="stat-label">Elapsed Time</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5L8.6 10.5"/></svg>Agent Orchestration Graph</h3>
+          <div class="workflow-wrap">
+            <svg class="workflow-svg" viewBox="0 0 760 260" id="workflowSvg"></svg>
+          </div>
+        </div>
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Quality Score Trend</h3>
+          <svg viewBox="0 0 300 160" id="chartSvg" width="100%" height="160"></svg>
+          <div style="margin-top:10px; font-size:12px; color:var(--text-dim);">Target: <strong style="color:var(--good)">≥ 90%</strong> quality score</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>Task Input</h3>
+        <textarea class="task-input" id="taskInput">function calculateDiscount(price, userType) {
+  if (userType == "premium") {
+    return price * 0.8;
+  } else if (userType == "regular") {
+    return price * 0.95;
+  } else {
+    return price;
+  }
+}
+
+var users = [];
+for (var i = 0; i < 100; i++) {
+  users[i] = { name: "user" + i, type: i % 2 == 0 ? "premium" : "regular" };
+}
+
+function processUsers(users) {
+  var results = [];
+  for (var i = 0; i < users.length; i++) {
+    var discount = calculateDiscount(100, users[i].type);
+    results.push(discount);
+  }
+  return results;
+}</textarea>
+        <div style="margin-top:10px; font-size:11.5px; color:var(--text-dim);">This code snippet will be reviewed and iteratively improved by the multi-agent pipeline.</div>
+      </div>
+    </div>
+
+    <!-- AGENTS VIEW -->
+    <div class="view" id="view-agents">
+      <div class="grid grid-4" id="agentsGrid"></div>
+    </div>
+
+    <!-- EXECUTION VIEW -->
+    <div class="view" id="view-execution">
+      <div class="card" style="margin-bottom:18px;">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 15.5"/></svg>Execution Timeline</h3>
+        <div id="pillWrap" style="min-height:40px;"></div>
+        <div class="progress-bar"><div class="progress-fill" id="execProgress" style="width:0%"></div></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Iteration History</h3>
+          <div id="iterationList"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/></svg><div>No iterations yet. Run the pipeline to begin.</div></div></div>
+        </div>
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Current Draft</h3>
+          <div class="code-block" id="draftBlock" style="max-height:340px; overflow-y:auto;">// Draft will appear here once execution begins</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMORY VIEW -->
+    <div class="view" id="view-memory">
+      <div class="card">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 015 5c0 2-1 3-1 5v2H8v-2c0-2-1-3-1-5a5 5 0 015-5z"/></svg>Memory Bank</h3>
+        <div id="memoryList"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a5 5 0 015 5c0 2-1 3-1 5v2H8v-2c0-2-1-3-1-5a5 5 0 015-5z"/></svg><div>No memory entries yet.</div></div></div>
+      </div>
+    </div>
+
+    <!-- LOGS VIEW -->
+    <div class="view" id="view-logs">
+      <div class="card">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Execution Logs</h3>
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="logSearch" placeholder="Search logs by agent or keyword...">
+        </div>
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div class="view" id="view-settings">
+      <div class="card" style="max-width:560px;">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Pipeline Settings</h3>
+        <div class="settings-row">
+          <div><div class="settings-label">Target quality score</div><div class="settings-sub">Stopping condition threshold</div></div>
+          <input type="range" min="70" max="99" value="90" id="targetSlider">
+          <span id="targetVal" style="font-weight:700; margin-left:8px;">90%</span>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Safety iteration cap</div><div class="settings-sub">Max rounds before forced stop</div></div>
+          <input type="range" min="3" max="12" value="8" id="capSlider">
+          <span id="capVal" style="font-weight:700; margin-left:8px;">8</span>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Plateau sensitivity</div><div class="settings-sub">Min score gain to avoid plateau stop</div></div>
+          <input type="range" min="1" max="10" value="2" id="plateauSlider">
+          <span id="plateauVal" style="font-weight:700; margin-left:8px;">2%</span>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Clear all local data</div><div class="settings-sub">Wipes logs, memory, and history from this browser</div></div>
+          <button class="btn" id="clearDataBtn">Clear Data</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============ ICONS ============ */
+const ICONS = {
+  planner:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 11H5a2 2 0 00-2 2v7a2 2 0 002 2h4M9 11V5a2 2 0 012-2h2a2 2 0 012 2v6M9 11h6m0 0h4a2 2 0 012 2v7a2 2 0 01-2 2h-4"/></svg>',
+  executor:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+  evaluator:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>',
+  critic:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  improver:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M13 2L3 14h7v8l10-12h-7V2z"/></svg>',
+  memory:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2a5 5 0 015 5c0 2-1 3-1 5v2H8v-2c0-2-1-3-1-5a5 5 0 015-5z"/></svg>',
+  safety:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>',
+  final:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>',
+};
+
+/* ============ AGENT DEFINITIONS ============ */
+const AGENTS = [
+  {id:'planner', name:'Planner', role:'Strategizes review focus areas', color:'linear-gradient(135deg,#8b7cf6,#a78bfa)', tag:'planner',
+   prompt:`You are the PLANNER agent in a Code Review Assistant pipeline.
+
+ROLE: Analyze the submitted code and produce a structured review plan.
+
+RESPONSIBILITIES:
+- Identify the language, apparent purpose, and scope of the code.
+- List 3-6 concrete review dimensions to focus on this round (e.g. naming, mutability, loop style, error handling, readability, performance).
+- Prioritize dimensions that most affect maintainability and correctness.
+- Output a short, ordered checklist — no fixes yet, only focus areas.
+
+CONSTRAINTS:
+- Do not rewrite code.
+- Do not repeat the same plan verbatim across rounds; adapt based on prior critique in memory.
+- Keep the plan under 6 bullet points.`},
+
+  {id:'executor', name:'Executor', role:'Applies improvements to the code', color:'linear-gradient(135deg,#7cc8f6,#5db3ee)', tag:'executor',
+   prompt:`You are the EXECUTOR agent in a Code Review Assistant pipeline.
+
+ROLE: Produce or revise a code draft based on the Planner's checklist and any prior Critic feedback in memory.
+
+RESPONSIBILITIES:
+- Apply the specific fixes requested (e.g. replace var with const/let, add strict equality, add error handling, improve naming).
+- Preserve original behavior/intent of the code.
+- Make incremental, targeted changes each round rather than unrelated rewrites.
+- Return only the updated code draft.
+
+CONSTRAINTS:
+- Never remove functionality without justification.
+- Never introduce syntax errors.
+- Track exactly what changed vs the previous draft.`},
+
+  {id:'evaluator', name:'Evaluator', role:'Scores draft quality objectively', color:'linear-gradient(135deg,#f19bd9,#e879c4)', tag:'evaluator',
+   prompt:`You are the EVALUATOR agent in a Code Review Assistant pipeline.
+
+ROLE: Assign an objective Quality Score (0-100%) to the current draft.
+
+SCORING RUBRIC:
+- Correctness & safety (30%)
+- Readability & naming (20%)
+- Modern best practices, e.g. const/let, strict equality (20%)
+- Error handling & edge cases (15%)
+- Performance & structure (15%)
+
+RESPONSIBILITIES:
+- Compute a single quality score for this round.
+- Briefly justify the score with 2-3 factors.
+- Compare against the previous round's score to detect plateau.
+
+CONSTRAINTS:
+- Be strict and consistent — do not inflate scores to end the loop early.
+- Score must be defensible against the rubric, not vibes-based.`},
+
+  {id:'critic', name:'Critic', role:'Finds concrete remaining issues', color:'linear-gradient(135deg,#f6b93b,#f0a020)', tag:'critic',
+   prompt:`You are the CRITIC agent in a Code Review Assistant pipeline.
+
+ROLE: Identify concrete, specific issues still present in the current draft.
+
+RESPONSIBILITIES:
+- List issues as specific, actionable findings (not vague praise or vague complaints).
+- Rank issues by severity: Critical / Moderate / Minor.
+- Reference exact patterns (e.g. "loose equality on line X", "var used instead of let").
+- Feed findings directly to the Improver — do not fix anything yourself.
+
+CONSTRAINTS:
+- No repeating identical critique across rounds without checking if it was addressed.
+- If no issues remain, explicitly state that and recommend stopping.`},
+
+  {id:'improver', name:'Improver', role:'Resolves critic findings', color:'linear-gradient(135deg,#3ecf8e,#2fb87b)', tag:'improver',
+   prompt:`You are the IMPROVER agent in a Code Review Assistant pipeline.
+
+ROLE: Resolve the Critic's findings by producing a refined code draft.
+
+RESPONSIBILITIES:
+- Address each Critical and Moderate issue raised by the Critic, in order of severity.
+- Update the shared draft directly.
+- Log exactly which findings were resolved and how.
+- Push the resolved draft back to the Evaluator for re-scoring.
+
+CONSTRAINTS:
+- Do not introduce new unrelated changes.
+- Do not regress previously fixed issues.
+- If a finding cannot be safely resolved, state why instead of guessing.`},
+
+  {id:'memory', name:'Memory Manager', role:'Tracks state across rounds', color:'linear-gradient(135deg,#a78bfa,#8b5cf6)', tag:'memory',
+   prompt:`You are the MEMORY MANAGER agent in a Code Review Assistant pipeline.
+
+ROLE: Maintain persistent state across all rounds of the loop.
+
+RESPONSIBILITIES:
+- Store: current draft, score history, critique history, and change log per round.
+- Detect plateau: if score improvement between rounds falls below the configured sensitivity threshold, flag it.
+- Supply relevant historical context to Planner/Executor/Critic each round so they don't repeat work.
+- Persist all state to LocalStorage so history survives a page reload.
+
+CONSTRAINTS:
+- Never silently drop history — always append, never overwrite past rounds.
+- Flag any state inconsistency to the Safety Monitor.`},
+
+  {id:'safety', name:'Safety Monitor', role:'Enforces stopping conditions', color:'linear-gradient(135deg,#f2607a,#e0345a)', tag:'safety',
+   prompt:`You are the SAFETY MONITOR agent in a Code Review Assistant pipeline.
+
+ROLE: Guarantee the loop terminates and never runs unbounded.
+
+RESPONSIBILITIES:
+- Check three stopping conditions every round, in this order:
+  1) Target score reached (Quality Score >= configured target)
+  2) Plateau detected (improvement below sensitivity threshold for 2 consecutive rounds)
+  3) Safety iteration cap reached (round count >= configured max)
+- Whichever condition triggers first ends the loop with an exact, logged reason.
+- Never allow more than the safety cap rounds under any circumstance.
+
+CONSTRAINTS:
+- This agent's decision is final and cannot be overridden by other agents.
+- Always report the precise stopping reason to the Final Reviewer.`},
+
+  {id:'final', name:'Final Reviewer', role:'Delivers the final verdict', color:'linear-gradient(135deg,#241d3e,#3a3160)', tag:'final',
+   prompt:`You are the FINAL REVIEWER agent in a Code Review Assistant pipeline.
+
+ROLE: Deliver the closing summary once the Safety Monitor ends the loop.
+
+RESPONSIBILITIES:
+- Summarize the final Quality Score and how it compares to the target.
+- State the exact stopping reason (target reached / plateau / cap reached).
+- Summarize total changes made across all rounds.
+- Give a clear, human-readable verdict: Approved, Approved with notes, or Needs further review.
+
+CONSTRAINTS:
+- Do not re-run scoring — use the Evaluator's last recorded score.
+- Be concise: this is the executive summary of the whole pipeline run.`},
+];
+
+/* ============ STATE ============ */
+let state = {
+  running:false,
+  round:0,
+  maxRounds:8,
+  target:90,
+  plateauSensitivity:2,
+  scoreHistory:[],
+  iterations:[],
+  logs:[],
+  memory:[],
+  draft:'',
+  stopped:false,
+  stopReason:'',
+  startTime:null,
+  elapsedTimer:null,
+};
+
+function loadState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('agentStudioState'));
+    if(saved){ Object.assign(state, saved, {running:false, elapsedTimer:null}); }
+  }catch(e){}
+  try{
+    const theme = localStorage.getItem('agentStudioTheme');
+    if(theme==='dark'){ document.body.setAttribute('data-theme','dark'); document.getElementById('themeLabel').textContent='Dark mode'; }
+  }catch(e){}
+}
+function saveState(){
+  const {elapsedTimer, ...toSave} = state;
+  try{ localStorage.setItem('agentStudioState', JSON.stringify(toSave)); }catch(e){}
+}
+
+/* ============ TOASTS ============ */
+function toast(msg, type='info'){
+  const icons = {
+    success:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>',
+    error:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    info:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+  };
+  const el = document.createElement('div');
+  el.className = 'toast '+type;
+  el.innerHTML = `<div class="toast-icon">${icons[type]}</div><div>${msg}</div>`;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(120%)'; el.style.transition='all .3s ease'; setTimeout(()=>el.remove(),300); }, 3400);
+}
+
+/* ============ NAVIGATION ============ */
+const views = document.querySelectorAll('.view');
+const navItems = document.querySelectorAll('.nav-item[data-view]');
+const titles = {
+  dashboard:['Dashboard','Live overview of your Code Review Assistant pipeline'],
+  agents:['Agents','Eight specialized agents collaborating in the review loop'],
+  execution:['Execution','Round-by-round pipeline execution and current draft'],
+  memory:['Memory','Persistent state carried across rounds'],
+  logs:['Logs','Full, searchable execution trace'],
+  settings:['Settings','Configure stopping conditions and thresholds'],
+};
+navItems.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navItems.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    views.forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    document.getElementById('pageTitle').textContent = titles[btn.dataset.view][0];
+    document.getElementById('pageSub').textContent = titles[btn.dataset.view][1];
+    if(window.innerWidth<=900) document.getElementById('sidebar').classList.remove('open');
+  });
+});
+document.getElementById('menuBtn').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+/* ============ THEME ============ */
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const isDark = document.body.getAttribute('data-theme')==='dark';
+  document.body.setAttribute('data-theme', isDark?'light':'dark');
+  document.getElementById('themeLabel').textContent = isDark?'Light mode':'Dark mode';
+  localStorage.setItem('agentStudioTheme', isDark?'light':'dark');
+});
+
+/* ============ RENDER AGENTS VIEW ============ */
+function renderAgents(){
+  const grid = document.getElementById('agentsGrid');
+  grid.innerHTML = AGENTS.map(a=>`
+    <div class="card agent-card" style="grid-column:span 2;">
+      <div class="agent-header">
+        <div class="agent-avatar" style="background:${a.color}">${ICONS[a.id]}</div>
+        <div>
+          <div class="agent-name">${a.name}</div>
+          <div class="agent-role">${a.role}</div>
+        </div>
+      </div>
+      <div class="agent-prompt">${escapeHtml(a.prompt)}</div>
+    </div>
+  `).join('');
+}
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ============ WORKFLOW GRAPH ============ */
+const graphOrder = ['planner','executor','evaluator','critic','improver','safety','final'];
+const nodePositions = {
+  planner:{x:60,y:60}, executor:{x:220,y:60}, evaluator:{x:380,y:60},
+  critic:{x:540,y:60}, improver:{x:540,y:180}, safety:{x:220,y:180}, final:{x:700,y:120},
+};
+function renderWorkflow(activeId, doneIds){
+  const svg = document.getElementById('workflowSvg');
+  let edges = `
+    <path class="wedge ${activeId==='executor'?'active':''}" d="M100,60 L180,60"/>
+    <path class="wedge ${activeId==='evaluator'?'active':''}" d="M260,60 L340,60"/>
+    <path class="wedge ${activeId==='critic'?'active':''}" d="M420,60 L500,60"/>
+    <path class="wedge ${activeId==='improver'?'active':''}" d="M540,100 L540,140"/>
+    <path class="wedge ${activeId==='evaluator'&&doneIds.includes('improver')?'active':''}" d="M500,180 Q380,220 380,100" />
+    <path class="wedge ${activeId==='safety'?'active':''}" d="M260,140 Q260,100 260,100"/>
+    <path class="wedge ${activeId==='final'?'active':''}" d="M300,180 Q500,260 660,140"/>
+  `;
+  let nodes = '';
+  graphOrder.forEach(id=>{
+    const pos = nodePositions[id];
+    const a = AGENTS.find(x=>x.id===id);
+    const cls = activeId===id ? 'active' : (doneIds.includes(id) ? 'done' : '');
+    nodes += `
+      <g class="wnode ${cls}" transform="translate(${pos.x},${pos.y})">
+        <circle class="pulse-ring" cx="0" cy="0" r="26"/>
+        <circle class="wnode-circle" cx="0" cy="0" r="26"/>
+        <text class="wnode-label" y="4">${a.name.split(' ')[0]}</text>
+      </g>
+      <text class="wnode-sub" x="${pos.x}" y="${pos.y+42}">${cls==='active'?'Running…':cls==='done'?'Complete':'Waiting'}</text>
+    `;
+  });
+  svg.innerHTML = edges + nodes;
+}
+renderWorkflow(null, []);
+
+/* ============ CHART ============ */
+function renderChart(){
+  const svg = document.getElementById('chartSvg');
+  const hist = state.scoreHistory;
+  if(hist.length===0){ svg.innerHTML = `<text x="150" y="80" text-anchor="middle" fill="var(--text-dim)" font-size="12">No data yet</text>`; return; }
+  const w=300,h=160,pad=24;
+  const maxScore=100;
+  const stepX = hist.length>1 ? (w-pad*2)/(hist.length-1) : 0;
+  let points = hist.map((s,i)=> `${pad+i*stepX},${h-pad-(s/maxScore)*(h-pad*2)}`).join(' ');
+  const targetY = h-pad-(state.target/maxScore)*(h-pad*2);
+  let dots = hist.map((s,i)=>`<circle cx="${pad+i*stepX}" cy="${h-pad-(s/maxScore)*(h-pad*2)}" r="3.5" fill="var(--accent1)"/>`).join('');
+  svg.innerHTML = `
+    <line x1="${pad}" y1="${targetY}" x2="${w-pad}" y2="${targetY}" stroke="var(--good)" stroke-dasharray="4 4" stroke-width="1.5"/>
+    <polyline points="${points}" fill="none" stroke="var(--accent1)" stroke-width="2.5"/>
+    ${dots}
+  `;
+}
+
+/* ============ LOGS ============ */
+function addLog(agentId, msg){
+  const entry = {agent:agentId, msg, time:new Date().toLocaleTimeString()};
+  state.logs.unshift(entry);
+  renderLogs();
+}
+function renderLogs(filter=''){
+  const list = document.getElementById('logList');
+  const filtered = state.logs.filter(l => (l.agent+l.msg).toLowerCase().includes(filter.toLowerCase()));
+  if(filtered.length===0){ list.innerHTML = `<div class="empty-state" style="padding:20px;"><div>No logs match your search.</div></div>`; return; }
+  list.innerHTML = filtered.map(l=>`
+    <div class="log-entry">
+      <span class="log-tag tag-${l.agent}">${l.agent}</span>
+      <span class="log-msg">${escapeHtml(l.msg)}</span>
+      <span class="log-time">${l.time}</span>
+    </div>
+  `).join('');
+}
+document.getElementById('logSearch').addEventListener('input', e=>renderLogs(e.target.value));
+
+/* ============ MEMORY ============ */
+function addMemory(text){
+  state.memory.unshift({text, time:new Date().toLocaleTimeString()});
+  renderMemory();
+}
+function renderMemory(){
+  const list = document.getElementById('memoryList');
+  if(state.memory.length===0){ list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a5 5 0 015 5c0 2-1 3-1 5v2H8v-2c0-2-1-3-1-5a5 5 0 015-5z"/></svg><div>No memory entries yet.</div></div>`; return; }
+  list.innerHTML = state.memory.map(m=>`
+    <div class="memory-item">
+      <div class="memory-icon">${ICONS.memory}</div>
+      <div style="flex:1;"><div>${escapeHtml(m.text)}</div><div style="color:var(--text-dim); font-size:10.5px; margin-top:3px;">${m.time}</div></div>
+    </div>
+  `).join('');
+}
+
+/* ============ EXECUTION RENDERING ============ */
+function renderPills(){
+  const wrap = document.getElementById('pillWrap');
+  if(state.iterations.length===0){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = state.iterations.map(it=>{
+    const dotClass = it.score>=state.target ? 'dot-good' : it.score>=70 ? 'dot-warn' : 'dot-bad';
+    return `<span class="round-pill"><span class="dot ${dotClass}"></span>Round ${it.round}: ${it.score}%</span>`;
+  }).join('');
+}
+function renderIterationList(){
+  const list = document.getElementById('iterationList');
+  if(state.iterations.length===0){ list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/></svg><div>No iterations yet. Run the pipeline to begin.</div></div>`; return; }
+  list.innerHTML = [...state.iterations].reverse().map(it=>{
+    const color = it.score>=state.target ? 'var(--good)' : it.score>=70 ? 'var(--warn)' : 'var(--bad)';
+    return `<div class="iteration-row">
+      <div class="iteration-round">R${it.round}</div>
+      <div style="font-size:12px; color:var(--text-dim);">${escapeHtml(it.note)}</div>
+      <div class="iteration-score" style="color:${color}">${it.score}%</div>
+    </div>`;
+  }).join('');
+}
+function updateDraftBlock(){
+  document.getElementById('draftBlock').textContent = state.draft || '// Draft will appear here once execution begins';
+}
+
+/* ============ STATS ============ */
+function updateStats(){
+  document.getElementById('statStatus').textContent = state.running ? 'Running' : (state.stopped ? 'Complete' : 'Idle');
+  document.getElementById('statRound').textContent = `${state.round} / ${state.maxRounds}`;
+  const lastScore = state.scoreHistory.length ? state.scoreHistory[state.scoreHistory.length-1] : 0;
+  document.getElementById('statScore').textContent = lastScore+'%';
+  const trendEl = document.getElementById('scoreTrend');
+  if(state.scoreHistory.length>=2){
+    const diff = state.scoreHistory[state.scoreHistory.length-1] - state.scoreHistory[state.scoreHistory.length-2];
+    trendEl.textContent = (diff>=0?'+':'')+diff.toFixed(0)+'% this round';
+    trendEl.className = 'stat-trend '+(diff>0?'trend-up':'trend-flat');
+  } else {
+    trendEl.textContent = state.scoreHistory.length===1 ? 'Baseline set' : 'Not started';
+    trendEl.className = 'stat-trend trend-flat';
+  }
+  document.getElementById('execProgress').style.width = Math.min(100,(state.round/state.maxRounds)*100)+'%';
+}
+function updateElapsed(){
+  if(!state.startTime) { document.getElementById('statTime').textContent = '0.0s'; return; }
+  const secs = ((Date.now()-state.startTime)/1000).toFixed(1);
+  document.getElementById('statTime').textContent = secs+'s';
+}
+
+/* ============ QUALITY SCORING SIMULATION ============ */
+// Deterministic-ish scoring simulation that mimics real static analysis signal + diminishing returns
+function computeScore(round, prevScore){
+  const base = 42; // starting quality of the messy sample code
+  const growth = [22, 16, 11, 7, 4, 2.5, 1.5, 1]; // diminishing returns per round
+  let g = growth[Math.min(round-1, growth.length-1)];
+  // small pseudo-random variance for realism, deterministic seed based on round
+  const variance = ((Math.sin(round*13.37)+1)/2)*3 - 1.5;
+  let score = round===1 ? base+g+variance : prevScore + g + variance;
+  score = Math.max(0, Math.min(99.5, score));
+  return Math.round(score*10)/10;
+}
+
+const critiqueBank = [
+  "Uses var instead of let/const across the module.",
+  "Loose equality (==) used in conditional checks instead of strict equality (===).",
+  "Function calculateDiscount lacks input validation for price and userType.",
+  "No error handling for unexpected userType values beyond the else fallback.",
+  "Variable names like 'i' and 'users' could be more descriptive in nested scopes.",
+  "processUsers rebuilds an array with push in a loop instead of using map().",
+  "No JSDoc/type annotations documenting expected parameter shapes.",
+  "Magic numbers (0.8, 0.95) should be named constants for discount rates.",
+];
+const changeBank = [
+  "Replaced var with const/let for block scoping.",
+  "Converted == to === for strict equality checks.",
+  "Added input validation guard clauses to calculateDiscount.",
+  "Extracted discount rates into named constants (PREMIUM_RATE, REGULAR_RATE).",
+  "Refactored processUsers to use Array.prototype.map for clarity.",
+  "Added basic JSDoc comments describing function parameters and return values.",
+  "Improved variable naming (user -> currentUser, etc.) in loop bodies.",
+  "Added defensive default case with explicit error logging for unknown userType.",
+];
+
+function buildDraft(round){
+  let code = `function calculateDiscount(price, userType) {\n`;
+  if(round>=2) code += `  if (typeof price !== 'number' || price < 0) throw new Error('Invalid price');\n`;
+  code += round>=2 ? `  if (userType === "premium") {\n` : `  if (userType == "premium") {\n`;
+  code += round>=4 ? `    return price * PREMIUM_RATE;\n` : `    return price * 0.8;\n`;
+  code += round>=2 ? `  } else if (userType === "regular") {\n` : `  } else if (userType == "regular") {\n`;
+  code += round>=4 ? `    return price * REGULAR_RATE;\n` : `    return price * 0.95;\n`;
+  code += `  } else {\n`;
+  code += round>=8 ? `    console.warn('Unknown userType:', userType);\n    return price;\n` : `    return price;\n`;
+  code += `  }\n}\n\n`;
+  if(round>=4) code += `const PREMIUM_RATE = 0.8;\nconst REGULAR_RATE = 0.95;\n\n`;
+  code += round>=2 ? `const users = [];\n` : `var users = [];\n`;
+  code += round>=2
+    ? `for (let i = 0; i < 100; i++) {\n  users[i] = { name: \`user\${i}\`, type: i % 2 === 0 ? "premium" : "regular" };\n}\n\n`
+    : `for (var i = 0; i < 100; i++) {\n  users[i] = { name: "user" + i, type: i % 2 == 0 ? "premium" : "regular" };\n}\n\n`;
+  code += round>=6
+    ? `/**\n * Computes discounted prices for a list of users.\n * @param {Array<{type:string}>} users\n * @returns {number[]} discounted prices\n */\nfunction processUsers(users) {\n  return users.map(u => calculateDiscount(100, u.type));\n}`
+    : `function processUsers(users) {\n  var results = [];\n  for (var i = 0; i < users.length; i++) {\n    var discount = calculateDiscount(100, users[i].type);\n    results.push(discount);\n  }\n  return results;\n}`;
+  return code;
+}
+
+/* ============ MAIN LOOP ============ */
+async function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function setActiveNode(id, doneIds){
+  renderWorkflow(id, doneIds);
+}
+
+async function runPipeline(){
+  if(state.running) return;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('resetBtn').disabled = true;
+  state.running = true;
+  state.stopped = false;
+  state.round = 0;
+  state.scoreHistory = [];
+  state.iterations = [];
+  state.draft = document.getElementById('taskInput').value.trim() || buildDraft(1);
+  state.startTime = Date.now();
+  state.elapsedTimer = setInterval(updateElapsed, 100);
+  updateDraftBlock();
+  updateStats();
+  toast('Pipeline started — Planner is analyzing the code.', 'info');
+  addLog('system', 'Pipeline execution started for task: Code Review Assistant.');
+
+  const doneIds = [];
+  let plateauCount = 0;
+  let stopReason = '';
+
+  // Planner phase (once)
+  setActiveNode('planner', doneIds);
+  await sleep(650);
+  addLog('planner', 'Focus areas identified: var/let usage, strict equality, input validation, naming, discount constants.');
+  addMemory('Planner set initial review checklist: modernize syntax, add validation, extract constants.');
+  doneIds.push('planner');
+
+  while(state.round < state.maxRounds){
+    state.round++;
+    updateStats();
+
+    // Executor
+    setActiveNode('executor', doneIds);
+    await sleep(550);
+    const newDraft = buildDraft(state.round);
+    state.draft = newDraft;
+    updateDraftBlock();
+    const change = changeBank[Math.min(state.round-1, changeBank.length-1)];
+    addLog('executor', `Round ${state.round}: ${change}`);
+
+    // Evaluator
+    setActiveNode('evaluator', doneIds);
+    await sleep(550);
+    const prevScore = state.scoreHistory.length ? state.scoreHistory[state.scoreHistory.length-1] : 0;
+    const score = computeScore(state.round, prevScore);
+    state.scoreHistory.push(score);
+    addLog('evaluator', `Round ${state.round} quality score: ${score}% (rubric: correctness, readability, best practices, error handling, structure).`);
+    renderChart();
+    updateStats();
+
+    // Critic
+    setActiveNode('critic', doneIds);
+    await sleep(550);
+    const critique = critiqueBank[Math.min(state.round-1, critiqueBank.length-1)];
+    if(score < state.target){
+      addLog('critic', `Remaining issue flagged: ${critique}`);
+    } else {
+      addLog('critic', `No blocking issues found. Draft meets quality bar.`);
+    }
+
+    // Improver
+    setActiveNode('improver', doneIds);
+    await sleep(500);
+    if(score < state.target){
+      addLog('improver', `Resolving finding from Critic: "${critique}" scheduled for next round.`);
+    } else {
+      addLog('improver', `No further changes required this round.`);
+    }
+    addMemory(`Round ${state.round} complete — score ${score}%, change: ${change}`);
+
+    state.iterations.push({round:state.round, score, note:change});
+    renderPills();
+    renderIterationList();
+    saveState();
+
+    // Safety Monitor stopping condition check
+    setActiveNode('safety', doneIds);
+    await sleep(500);
+
+    if(score >= state.target){
+      stopReason = `Target score reached — Quality Score ${score}% ≥ target ${state.target}%.`;
+      addLog('safety', stopReason);
+      break;
+    }
+    if(state.round>=2){
+      const improvement = state.scoreHistory[state.scoreHistory.length-1] - state.scoreHistory[state.scoreHistory.length-2];
+      if(improvement < state.plateauSensitivity){
+        plateauCount++;
+        addLog('safety', `Improvement of ${improvement.toFixed(1)}% below sensitivity threshold (${state.plateauSensitivity}%). Plateau streak: ${plateauCount}.`);
+        if(plateauCount>=2){
+          stopReason = `Plateau detected — improvement stayed below ${state.plateauSensitivity}% for 2 consecutive rounds.`;
+          addLog('safety', stopReason);
+          break;
+        }
+      } else {
+        plateauCount = 0;
+      }
+    }
+    if(state.round >= state.maxRounds){
+      stopReason = `Safety iteration cap reached — ${state.maxRounds} rounds completed without hitting target.`;
+      addLog('safety', stopReason);
+      break;
+    }
+    addLog('safety', `No stopping condition met. Looping back to Evaluator.`);
+  }
+
+  // Final Reviewer
+  doneIds.push('executor','evaluator','critic','improver','safety');
+  setActiveNode('final', doneIds);
+  await sleep(700);
+  const finalScore = state.scoreHistory[state.scoreHistory.length-1] || 0;
+  const verdict = finalScore>=state.target ? 'Approved' : finalScore>=75 ? 'Approved with notes' : 'Needs further review';
+  addLog('final', `Final Quality Score: ${finalScore}%. Stopping reason: ${stopReason}. Verdict: ${verdict}.`);
+  addMemory(`Pipeline concluded. Verdict: ${verdict}. Reason: ${stopReason}`);
+  doneIds.push('final');
+  setActiveNode(null, doneIds);
+
+  state.running = false;
+  state.stopped = true;
+  state.stopReason = stopReason;
+  clearInterval(state.elapsedTimer);
+  updateStats();
+  saveState();
+
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('resetBtn').disabled = false;
+
+  toast(`Pipeline complete: ${verdict} (${finalScore}%)`, finalScore>=state.target ? 'success':'info');
+}
+
+/* ============ CONTROLS ============ */
+document.getElementById('runBtn').addEventListener('click', ()=>{
+  runPipeline().catch(err=>{
+    toast('Pipeline error — see logs for details.', 'error');
+    addLog('system', 'ERROR: '+err.message);
+    state.running = false;
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('resetBtn').disabled = false;
+    clearInterval(state.elapsedTimer);
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(state.running){ toast('Cannot reset while pipeline is running.', 'error'); return; }
+  state = {
+    running:false, round:0, maxRounds: state.maxRounds, target: state.target,
+    plateauSensitivity: state.plateauSensitivity,
+    scoreHistory:[], iterations:[], logs:[], memory:[], draft:'', stopped:false, stopReason:'',
+    startTime:null, elapsedTimer:null,
+  };
+  renderPills(); renderIterationList(); renderLogs(); renderMemory(); renderChart(); updateDraftBlock(); updateStats();
+  renderWorkflow(null, []);
+  saveState();
+  toast('Workflow reset. Ready to run again.', 'success');
+});
+
+document.getElementById('clearDataBtn').addEventListener('click', ()=>{
+  localStorage.removeItem('agentStudioState');
+  toast('All local data cleared.', 'success');
+});
+
+/* Settings sliders */
+document.getElementById('targetSlider').addEventListener('input', e=>{
+  state.target = Number(e.target.value);
+  document.getElementById('targetVal').textContent = state.target+'%';
+  saveState();
+});
+document.getElementById('capSlider').addEventListener('input', e=>{
+  state.maxRounds = Number(e.target.value);
+  document.getElementById('capVal').textContent = state.maxRounds;
+  updateStats();
+  saveState();
+});
+document.getElementById('plateauSlider').addEventListener('input', e=>{
+  state.plateauSensitivity = Number(e.target.value);
+  document.getElementById('plateauVal').textContent = state.plateauSensitivity+'%';
+  saveState();
+});
+
+/* Export Report */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  if(state.iterations.length===0){ toast('Run the pipeline before exporting a report.', 'error'); return; }
+  const finalScore = state.scoreHistory[state.scoreHistory.length-1] || 0;
+  const lines = [
+    'AUTONOMOUS AGENT STUDIO — EXECUTION REPORT',
+    'Workflow: Code Review Assistant',
+    'Generated: ' + new Date().toString(),
+    '',
+    `Final Quality Score: ${finalScore}%`,
+    `Target: ${state.target}%`,
+    `Stopping Reason: ${state.stopReason || 'N/A'}`,
+    `Total Rounds: ${state.round}`,
+    '',
+    '--- ITERATION HISTORY ---',
+    ...state.iterations.map(it=>`Round ${it.round}: ${it.score}% — ${it.note}`),
+    '',
+    '--- FINAL DRAFT ---',
+    state.draft,
+    '',
+    '--- EXECUTION LOG ---',
+    ...state.logs.slice().reverse().map(l=>`[${l.time}] (${l.agent}) ${l.msg}`),
+  ];
+  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'agent-studio-report.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('Report exported successfully.', 'success');
+});
+
+/* ============ INIT ============ */
+loadState();
+renderAgents();
+renderPills();
+renderIterationList();
+renderLogs();
+renderMemory();
+renderChart();
+updateDraftBlock();
+updateStats();
+document.getElementById('targetSlider').value = state.target;
+document.getElementById('targetVal').textContent = state.target+'%';
+document.getElementById('capSlider').value = state.maxRounds;
+document.getElementById('capVal').textContent = state.maxRounds;
+document.getElementById('plateauSlider').value = state.plateauSensitivity;
+document.getElementById('plateauVal').textContent = state.plateauSensitivity+'%';
+</script>
+</body>
+</html>

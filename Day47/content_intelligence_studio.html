@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Intelligence Studio</title>
+<style>
+:root{
+  --lavender:#E9D5FF;
+  --blue:#BFDBFE;
+  --mint:#BBF7D0;
+  --peach:#FED7AA;
+  --cream:#FBF9F4;
+  --cream2:#F5F1E8;
+  --text:#2A2438;
+  --text-soft:#5B5468;
+  --card-bg:rgba(255,255,255,0.55);
+  --card-border:rgba(255,255,255,0.7);
+  --shadow:0 10px 30px rgba(120,100,160,0.12);
+  --shadow-lg:0 20px 50px rgba(120,100,160,0.18);
+  --radius:22px;
+  --accent-grad:linear-gradient(135deg,#E9D5FF,#BFDBFE);
+  --accent-grad2:linear-gradient(135deg,#BBF7D0,#BFDBFE);
+  --accent-grad3:linear-gradient(135deg,#FED7AA,#E9D5FF);
+}
+[data-theme="dark"]{
+  --cream:#181622;
+  --cream2:#1F1C2C;
+  --text:#EDE9F7;
+  --text-soft:#B4AEC7;
+  --card-bg:rgba(38,34,54,0.55);
+  --card-border:rgba(255,255,255,0.08);
+  --shadow:0 10px 30px rgba(0,0,0,0.35);
+  --shadow-lg:0 20px 50px rgba(0,0,0,0.5);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Segoe UI',ui-sans-serif,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(233,213,255,0.35), transparent 40%),
+    radial-gradient(circle at 90% 20%, rgba(191,219,254,0.35), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(187,247,208,0.3), transparent 40%),
+    var(--cream);
+  color:var(--text);
+  min-height:100vh;
+  transition:background .4s ease,color .4s ease;
+}
+.app{max-width:1400px; margin:0 auto; padding:28px 24px 80px;}
+header.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:28px; flex-wrap:wrap; gap:16px;
+}
+.brand{display:flex; align-items:center; gap:14px;}
+.brand .logo{
+  width:48px; height:48px; border-radius:16px;
+  background:var(--accent-grad);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; box-shadow:var(--shadow);
+}
+.brand h1{font-size:22px; font-weight:700; letter-spacing:-0.02em;}
+.brand p{font-size:13px; color:var(--text-soft); font-weight:500;}
+.toggle-wrap{display:flex; align-items:center; gap:10px;}
+.theme-toggle{
+  width:58px; height:32px; border-radius:20px; background:var(--card-bg);
+  border:1px solid var(--card-border); position:relative; cursor:pointer;
+  box-shadow:var(--shadow); transition:.3s;
+}
+.theme-toggle .knob{
+  width:24px; height:24px; border-radius:50%; background:var(--accent-grad);
+  position:absolute; top:3px; left:3px; transition:.35s cubic-bezier(.68,-0.4,.32,1.4);
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .theme-toggle .knob{ left:29px; }
+
+.grid{display:grid; grid-template-columns:1.1fr 1.4fr; gap:22px;}
+@media(max-width:980px){ .grid{grid-template-columns:1fr;} }
+
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:22px;
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:var(--shadow);
+  margin-bottom:22px;
+  animation:fadeUp .5s ease;
+}
+@keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+.card h2{font-size:15px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+.card h2 .tag{
+  font-size:11px; padding:2px 9px; border-radius:20px; background:var(--accent-grad2);
+  color:#1c3d2a; font-weight:700;
+}
+[data-theme="dark"] .card h2 .tag{color:#0e2417;}
+
+.upload-zone{
+  border:2px dashed rgba(150,130,190,0.4); border-radius:18px; padding:30px 18px;
+  text-align:center; cursor:pointer; transition:.25s; background:rgba(255,255,255,0.25);
+}
+[data-theme="dark"] .upload-zone{background:rgba(255,255,255,0.03);}
+.upload-zone:hover{border-color:#BFDBFE; background:rgba(191,219,254,0.15); transform:translateY(-2px);}
+.upload-zone .icon{font-size:34px; margin-bottom:8px;}
+.upload-zone p{font-size:13px; color:var(--text-soft);}
+
+textarea#contentInput{
+  width:100%; min-height:180px; resize:vertical; border-radius:14px; border:1px solid var(--card-border);
+  padding:14px; font-size:14px; font-family:inherit; background:rgba(255,255,255,0.5); color:var(--text);
+  margin-top:14px; outline:none; transition:.2s;
+}
+[data-theme="dark"] textarea#contentInput{background:rgba(255,255,255,0.04);}
+textarea#contentInput:focus{border-color:#BFDBFE; box-shadow:0 0 0 3px rgba(191,219,254,0.4);}
+
+.btn-row{display:flex; gap:12px; margin-top:14px; flex-wrap:wrap;}
+.btn{
+  border:none; padding:12px 22px; border-radius:14px; font-weight:700; font-size:13.5px;
+  cursor:pointer; transition:.2s; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow);
+}
+.btn-primary{background:var(--accent-grad); color:#3b2a55;}
+.btn-primary:hover{transform:translateY(-2px); box-shadow:var(--shadow-lg);}
+.btn-secondary{background:rgba(255,255,255,0.5); color:var(--text); border:1px solid var(--card-border);}
+[data-theme="dark"] .btn-secondary{background:rgba(255,255,255,0.06);}
+.btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+.btn .spinner{
+  width:14px; height:14px; border:2px solid rgba(0,0,0,0.2); border-top-color:#3b2a55;
+  border-radius:50%; animation:spin .7s linear infinite; display:none;
+}
+.btn.loading .spinner{display:inline-block;}
+.btn.loading .label{opacity:.7;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.score-hero{display:flex; align-items:center; gap:24px; flex-wrap:wrap;}
+.score-ring{
+  width:130px; height:130px; border-radius:50%; position:relative; flex-shrink:0;
+  background:conic-gradient(#BBF7D0 calc(var(--pct,0)*1%), rgba(150,130,190,0.15) 0);
+  display:flex; align-items:center; justify-content:center;
+  transition:background 1s ease;
+}
+.score-ring::before{
+  content:""; position:absolute; width:100px; height:100px; border-radius:50%;
+  background:var(--cream); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06);
+}
+.score-ring span{position:relative; font-size:28px; font-weight:800; z-index:1;}
+.score-meta{flex:1; min-width:200px;}
+.score-meta h3{font-size:16px; margin-bottom:6px;}
+.score-meta p{font-size:13px; color:var(--text-soft); line-height:1.5;}
+.pill-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+.pill{
+  font-size:12px; font-weight:700; padding:5px 12px; border-radius:20px;
+  background:var(--accent-grad3); color:#5a3a1e;
+}
+[data-theme="dark"] .pill{color:#2e1c0e;}
+
+.reviewer-list{display:flex; flex-direction:column; gap:10px;}
+.reviewer-item{
+  display:flex; align-items:center; justify-content:space-between; padding:12px 14px;
+  background:rgba(255,255,255,0.4); border-radius:14px; border:1px solid var(--card-border);
+  transition:.3s;
+}
+[data-theme="dark"] .reviewer-item{background:rgba(255,255,255,0.03);}
+.reviewer-item .rname{display:flex; align-items:center; gap:10px; font-size:13.5px; font-weight:600;}
+.reviewer-avatar{
+  width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:15px; background:var(--accent-grad);
+}
+.status-badge{font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;}
+.status-idle{background:rgba(150,130,190,0.15); color:var(--text-soft);}
+.status-working{background:var(--blue); color:#1e3a5f; animation:pulse 1.2s infinite;}
+.status-done{background:var(--mint); color:#1c3d2a;}
+[data-theme="dark"] .status-working{color:#dbeafe;}
+[data-theme="dark"] .status-done{color:#c8f5d8;}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.55;}}
+
+.section-body{font-size:13.5px; line-height:1.75; color:var(--text); white-space:pre-wrap;}
+.section-body:empty::before{content:"Waiting for analysis…"; color:var(--text-soft); font-style:italic;}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+.subcard{background:rgba(255,255,255,0.35); border-radius:16px; padding:16px; border:1px solid var(--card-border);}
+[data-theme="dark"] .subcard{background:rgba(255,255,255,0.03);}
+
+.tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+.tab-btn{
+  padding:8px 16px; border-radius:12px; border:1px solid var(--card-border); background:rgba(255,255,255,0.4);
+  font-size:12.5px; font-weight:700; cursor:pointer; color:var(--text-soft); transition:.2s;
+}
+[data-theme="dark"] .tab-btn{background:rgba(255,255,255,0.04);}
+.tab-btn.active{background:var(--accent-grad); color:#3b2a55;}
+.tab-panel{display:none;} .tab-panel.active{display:block;}
+
+.log-list{max-height:220px; overflow-y:auto; font-size:12.5px; display:flex; flex-direction:column; gap:8px;}
+.log-item{display:flex; gap:10px; align-items:flex-start; color:var(--text-soft);}
+.log-dot{width:7px; height:7px; border-radius:50%; background:#BFDBFE; margin-top:5px; flex-shrink:0;}
+.log-time{font-weight:700; color:var(--text); min-width:64px;}
+
+.ba-wrap{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media(max-width:700px){.ba-wrap{grid-template-columns:1fr;}}
+.ba-col h4{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-soft); margin-bottom:8px;}
+.ba-before{border-left:3px solid var(--peach);}
+.ba-after{border-left:3px solid var(--mint);}
+
+footer.foot{text-align:center; font-size:12px; color:var(--text-soft); margin-top:40px;}
+
+::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:rgba(150,130,190,0.35); border-radius:10px;}
+</style>
+</head>
+<body data-theme="light">
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">✨</div>
+      <div>
+        <h1>Content Intelligence Studio</h1>
+        <p>AI-powered LinkedIn content review, powered by Claude</p>
+      </div>
+    </div>
+    <div class="toggle-wrap">
+      <span style="font-size:13px; font-weight:600; color:var(--text-soft);">Dark Mode</span>
+      <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()"><div class="knob"></div></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT COLUMN -->
+    <div>
+      <div class="card">
+        <h2>📥 Upload Area <span class="tag">Text Content</span></h2>
+        <div class="upload-zone" onclick="document.getElementById('contentInput').focus()">
+          <div class="icon">📝</div>
+          <p>Paste your LinkedIn post draft below. No files needed — plain text only.</p>
+        </div>
+        <textarea id="contentInput" placeholder="Paste your LinkedIn AI/Tech post draft here...">Everyone talks about AI replacing jobs.
+
+But here's what nobody tells you: AI is not replacing developers who know how to use it.
+
+Last week I automated a 4-hour data cleaning task into 12 minutes using a simple Python + Claude API pipeline. No fancy infra. Just clear prompts and a bit of code.
+
+If you're a B.Tech student reading this — stop fearing AI tools. Start pairing with them.
+
+3 things that changed how I build:
+1. Prompt engineering is a real skill, not a buzzword
+2. Small automations compound into huge productivity gains
+3. Understanding the "why" behind AI output matters more than the output itself
+
+The engineers who'll thrive in 2026 aren't the ones who avoid AI.
+They're the ones who direct it.
+
+What's one task AI has automated for you this month?
+
+#AI #MachineLearning #Productivity #TechCareers #Python</textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="analyzeBtn" onclick="runFullAnalysis()">
+            <span class="spinner"></span><span class="label">🚀 Run Full AI Analysis</span>
+          </button>
+          <button class="btn btn-secondary" onclick="loadSample()">🔄 Load Sample</button>
+          <button class="btn btn-secondary" onclick="clearAll()">🗑 Clear</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>👀 Content Preview</h2>
+        <div class="subcard section-body" id="contentPreview" style="max-height:220px; overflow-y:auto;"></div>
+      </div>
+
+      <div class="card">
+        <h2>🧑‍💼 Reviewer Status</h2>
+        <div class="reviewer-list" id="reviewerList"></div>
+      </div>
+
+      <div class="card">
+        <h2>🕒 Activity Log</h2>
+        <div class="log-list" id="activityLog"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <div class="card">
+        <h2>🏆 Overall AI Content Score</h2>
+        <div class="score-hero">
+          <div class="score-ring" id="scoreRing" style="--pct:0;"><span id="scoreNum">--</span></div>
+          <div class="score-meta">
+            <h3 id="scoreVerdict">Awaiting analysis</h3>
+            <p id="scoreDesc">Run the full analysis to generate your Content Health Report, reviewer verdicts, and rewrite suggestions.</p>
+            <div class="pill-row" id="scorePills"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📋 Executive Summary</h2>
+        <div class="section-body" id="execSummary"></div>
+      </div>
+
+      <div class="card">
+        <h2>🎣 Hook Analysis <span class="tag">Hook Reviewer</span></h2>
+        <div class="section-body" id="hookAnalysis"></div>
+      </div>
+
+      <div class="card">
+        <h2>📖 Readability Analysis <span class="tag">Readability Reviewer</span></h2>
+        <div class="section-body" id="readabilityAnalysis"></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h2>🔑 SEO & Keywords <span class="tag">SEO Reviewer</span></h2>
+          <div class="section-body" id="seoAnalysis"></div>
+        </div>
+        <div class="card">
+          <h2>📈 Engagement Prediction <span class="tag">Engagement Reviewer</span></h2>
+          <div class="section-body" id="engagementAnalysis"></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h2>💼 Platform Optimization <span class="tag">Platform Reviewer</span></h2>
+          <div class="section-body" id="platformAnalysis"></div>
+        </div>
+        <div class="card">
+          <h2>🎭 Tone Analysis <span class="tag">Branding Reviewer</span></h2>
+          <div class="section-body" id="toneAnalysis"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📣 CTA Review</h2>
+        <div class="section-body" id="ctaAnalysis"></div>
+      </div>
+
+      <div class="card">
+        <h2>✍️ AI Rewrite Suggestions & Alternatives</h2>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('rewrite')">Full Rewrite</button>
+          <button class="tab-btn" onclick="switchTab('hooks')">Alternative Hooks</button>
+          <button class="tab-btn" onclick="switchTab('titles')">Better Titles</button>
+        </div>
+        <div class="tab-panel active" id="tab-rewrite"><div class="section-body" id="rewriteBody"></div></div>
+        <div class="tab-panel" id="tab-hooks"><div class="section-body" id="hooksBody"></div></div>
+        <div class="tab-panel" id="tab-titles"><div class="section-body" id="titlesBody"></div></div>
+      </div>
+
+      <div class="card">
+        <h2>⚖️ Before vs After Comparison</h2>
+        <div class="ba-wrap">
+          <div class="ba-col">
+            <h4>Before (Original)</h4>
+            <div class="subcard ba-before section-body" id="baBefore" style="max-height:260px; overflow-y:auto;"></div>
+          </div>
+          <div class="ba-col">
+            <h4>After (AI-Optimized)</h4>
+            <div class="subcard ba-after section-body" id="baAfter" style="max-height:260px; overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>✅ Publishing Checklist</h2>
+        <div class="section-body" id="checklistBody"></div>
+      </div>
+
+      <div class="card">
+        <h2>🩺 Content Health Report</h2>
+        <div class="section-body" id="healthReport"></div>
+      </div>
+
+      <div class="card">
+        <h2>📄 Final Report</h2>
+        <div class="section-body" id="finalReport"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">Content Intelligence Studio · Brutally honest AI review, built for creators who want the truth.</footer>
+</div>
+
+<script>
+/* ---------------- THEME ---------------- */
+function toggleTheme(){
+  const body = document.body;
+  const isDark = body.getAttribute('data-theme') === 'dark';
+  body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+}
+
+/* ---------------- SAMPLE / CLEAR ---------------- */
+const SAMPLE_TEXT = document.getElementById('contentInput').value;
+function loadSample(){ document.getElementById('contentInput').value = SAMPLE_TEXT; updatePreview(); }
+function clearAll(){ document.getElementById('contentInput').value=''; updatePreview(); }
+document.getElementById('contentInput').addEventListener('input', updatePreview);
+function updatePreview(){
+  const val = document.getElementById('contentInput').value.trim();
+  document.getElementById('contentPreview').textContent = val || '';
+}
+updatePreview();
+
+/* ---------------- TABS ---------------- */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+/* ---------------- REVIEWERS CONFIG ---------------- */
+const REVIEWERS = [
+  {id:'hook', name:'Hook Reviewer', avatar:'🎣',
+    system:`You are the Hook Reviewer, a brutally honest LinkedIn content specialist who has analyzed over 50,000 viral tech posts. Your only job is to evaluate the opening 1-3 lines ("the hook") of a LinkedIn post.
+Evaluate: does the hook stop the scroll, create curiosity, promise a payoff, or use pattern interrupts? Call out clichés (e.g. "Let that sink in", "Unpopular opinion:") if used weakly. Be specific and reference the exact words used in the hook.
+Output plain text only, in this structure:
+Hook Score: X/10
+What Works:
+- ...
+What Fails:
+- ...
+Verdict: one blunt sentence.
+Do not use JSON, markdown headers, or code blocks. Plain text only.`,
+    target:'hookAnalysis'},
+  {id:'readability', name:'Readability Reviewer', avatar:'📖',
+    system:`You are the Readability Reviewer, an expert in scannable digital writing for busy LinkedIn audiences on mobile devices. Assess sentence length, paragraph length, whitespace usage, jargon density, and line-break rhythm.
+Output plain text only, in this structure:
+Readability Score: X/10
+Grade Level: approximate reading grade
+Strengths:
+- ...
+Issues:
+- ...
+Fix Priority: the single highest-impact readability fix.
+Plain text only, no markdown, no JSON.`,
+    target:'readabilityAnalysis'},
+  {id:'branding', name:'Branding Reviewer', avatar:'🎭',
+    system:`You are the Branding Reviewer, a personal-branding strategist for tech professionals on LinkedIn. Assess tone (confident/humble/preachy/authentic), voice consistency, and whether the post builds credibility and a distinct personal brand rather than sounding like generic AI content.
+Output plain text only, in this structure:
+Tone Detected: (e.g. confident, preachy, humble-brag, authentic, corporate)
+Brand Strength Score: X/10
+What Builds Credibility:
+- ...
+What Undermines It:
+- ...
+Verdict: one blunt sentence.
+Plain text only, no markdown, no JSON.`,
+    target:'toneAnalysis'},
+  {id:'engagement', name:'Engagement Reviewer', avatar:'📈',
+    system:`You are the Engagement Reviewer, a data-driven LinkedIn algorithm specialist who predicts post performance based on structure, dwell time triggers, and comment-bait quality.
+Output plain text only, in this structure:
+Predicted Engagement Tier: Low / Medium / High / Viral Potential
+Estimated Comment-Bait Quality: X/10
+Dwell-Time Triggers Found:
+- ...
+Missing Opportunities:
+- ...
+Verdict: one blunt sentence on realistic performance expectations.
+Plain text only, no markdown, no JSON.`,
+    target:'engagementAnalysis'},
+  {id:'seo', name:'SEO Reviewer', avatar:'🔑',
+    system:`You are the SEO Reviewer, an expert in LinkedIn's internal search and hashtag discovery algorithm. Assess keyword usage, hashtag relevance and count, and searchability for terms tech recruiters and hiring managers search for.
+Output plain text only, in this structure:
+SEO Score: X/10
+Primary Keywords Found:
+- ...
+Hashtag Review: comment on hashtag count, relevance, redundancy
+Missing High-Value Keywords:
+- ...
+Plain text only, no markdown, no JSON.`,
+    target:'seoAnalysis'},
+  {id:'platform', name:'Platform Reviewer', avatar:'💼',
+    system:`You are the Platform Reviewer, an expert specifically in LinkedIn's 2026 algorithm and formatting norms (line-break structure, ideal post length, native content preference, dwell time, first-2-lines truncation before "see more").
+Output plain text only, in this structure:
+Platform Fit Score: X/10
+Format Compliance:
+- ...
+Algorithm Risks:
+- ...
+Optimization Tips:
+- ...
+Plain text only, no markdown, no JSON.`,
+    target:'platformAnalysis'}
+];
+
+/* ---------------- STATE / UI HELPERS ---------------- */
+function log(msg){
+  const list = document.getElementById('activityLog');
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const item = document.createElement('div');
+  item.className='log-item';
+  item.innerHTML = `<div class="log-dot"></div><div><span class="log-time">${time}</span> ${msg}</div>`;
+  list.prepend(item);
+}
+
+function renderReviewerList(){
+  const wrap = document.getElementById('reviewerList');
+  wrap.innerHTML = '';
+  REVIEWERS.forEach(r=>{
+    const row = document.createElement('div');
+    row.className='reviewer-item';
+    row.id = 'reviewer-'+r.id;
+    row.innerHTML = `
+      <div class="rname"><div class="reviewer-avatar">${r.avatar}</div>${r.name}</div>
+      <div class="status-badge status-idle" id="status-${r.id}">Idle</div>`;
+    wrap.appendChild(row);
+  });
+}
+renderReviewerList();
+
+function setStatus(id, state){
+  const el = document.getElementById('status-'+id);
+  el.className = 'status-badge status-'+state;
+  el.textContent = state === 'idle' ? 'Idle' : state === 'working' ? 'Reviewing…' : 'Complete';
+}
+
+/* ---------------- CLAUDE API CALL ---------------- */
+async function callClaude(systemPrompt, userContent){
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userContent }]
+    })
+  });
+  const data = await response.json();
+  let text = '';
+  if (data && data.content && Array.isArray(data.content)){
+    data.content.forEach(block=>{
+      if (block.type === 'text' && block.text){ text += block.text; }
+    });
+  }
+  return text || '(No response received from reviewer.)';
+}
+
+/* ---------------- ORCHESTRATION ---------------- */
+async function runReviewer(reviewer, contentText){
+  setStatus(reviewer.id, 'working');
+  log(`${reviewer.name} started analyzing the post.`);
+  try{
+    const result = await callClaude(reviewer.system, `Analyze this LinkedIn post:\n\n${contentText}`);
+    document.getElementById(reviewer.target).textContent = result;
+    setStatus(reviewer.id, 'done');
+    log(`${reviewer.name} completed review.`);
+    return result;
+  }catch(err){
+    document.getElementById(reviewer.target).textContent = 'Reviewer error: could not complete analysis. ' + err.message;
+    setStatus(reviewer.id, 'idle');
+    log(`${reviewer.name} failed: ${err.message}`);
+    return '';
+  }
+}
+
+async function runFullAnalysis(){
+  const contentText = document.getElementById('contentInput').value.trim();
+  if (!contentText){ alert('Paste your LinkedIn post content first.'); return; }
+  updatePreview();
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.classList.add('loading'); btn.disabled = true;
+  log('Full analysis started.');
+
+  // reset ui
+  ['execSummary','ctaAnalysis','rewriteBody','hooksBody','titlesBody','checklistBody','healthReport','finalReport','baBefore','baAfter']
+    .forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('scoreNum').textContent='--';
+  document.getElementById('scoreRing').style.setProperty('--pct',0);
+  document.getElementById('scoreVerdict').textContent='Analyzing…';
+  document.getElementById('scorePills').innerHTML='';
+
+  document.getElementById('baBefore').textContent = contentText;
+
+  // Run the 6 specialist reviewers in parallel
+  const results = await Promise.all(REVIEWERS.map(r=>runReviewer(r, contentText)));
+  const [hookRes, readRes, brandRes, engRes, seoRes, platRes] = results;
+
+  // CTA review
+  setStatus('platform','done'); // no-op safeguard
+  log('CTA Reviewer started analyzing the call-to-action.');
+  const ctaSystem = `You are the CTA Reviewer, a conversion-focused LinkedIn copy expert. Assess whether the post ends with a clear, natural call-to-action that invites comments, shares, or replies without sounding desperate or generic.
+Output plain text only:
+CTA Score: X/10
+CTA Type Detected: (question / opinion-ask / soft-pitch / none)
+What Works:
+- ...
+What to Improve:
+- ...
+Plain text only, no markdown, no JSON.`;
+  const ctaResult = await callClaude(ctaSystem, `Review the CTA of this LinkedIn post:\n\n${contentText}`);
+  document.getElementById('ctaAnalysis').textContent = ctaResult;
+  log('CTA Reviewer completed review.');
+
+  // Executive Summary + Overall Score
+  log('Compiling Executive Summary and Overall Score.');
+  const execSystem = `You are the Executive Summary Compiler for a content intelligence platform. You receive six specialist reviews of a LinkedIn post (Hook, Readability, Branding/Tone, Engagement, SEO, Platform) plus a CTA review. Synthesize them into a single executive summary for a busy content creator.
+Output plain text only, in this exact structure:
+Overall AI Content Score: X/100
+One-Line Verdict: a single blunt sentence
+Top 3 Strengths:
+- ...
+Top 3 Weaknesses:
+- ...
+Biggest Risk If Published As-Is: one sentence
+Plain text only, no markdown, no JSON, no code blocks.`;
+  const execInput = `HOOK REVIEW:\n${hookRes}\n\nREADABILITY REVIEW:\n${readRes}\n\nBRANDING/TONE REVIEW:\n${brandRes}\n\nENGAGEMENT REVIEW:\n${engRes}\n\nSEO REVIEW:\n${seoRes}\n\nPLATFORM REVIEW:\n${platRes}\n\nCTA REVIEW:\n${ctaResult}\n\nORIGINAL POST:\n${contentText}`;
+  const execResult = await callClaude(execSystem, execInput);
+  document.getElementById('execSummary').textContent = execResult;
+
+  // extract score number for the ring
+  let scoreMatch = execResult.match(/Score:\s*(\d{1,3})\s*\/\s*100/i);
+  let scoreVal = scoreMatch ? Math.min(100, parseInt(scoreMatch[1])) : 70;
+  document.getElementById('scoreNum').textContent = scoreVal;
+  document.getElementById('scoreRing').style.setProperty('--pct', scoreVal);
+  let verdictMatch = execResult.match(/One-Line Verdict:\s*(.+)/i);
+  document.getElementById('scoreVerdict').textContent = verdictMatch ? verdictMatch[1].trim() : 'Analysis complete';
+  document.getElementById('scoreDesc').textContent = 'Full breakdown available below across all reviewer dimensions.';
+  const pills = document.getElementById('scorePills');
+  pills.innerHTML = '';
+  ['Hook','Readability','Branding','Engagement','SEO','Platform'].forEach(p=>{
+    const el = document.createElement('span'); el.className='pill'; el.textContent = p + ' ✓';
+    pills.appendChild(el);
+  });
+
+  // Rewrite + Hooks + Titles
+  log('AI Rewrite Suggestions generation started.');
+  const rewriteSystem = `You are the Senior Rewrite Editor. Using all specialist feedback provided, rewrite the LinkedIn post to fix the identified issues while preserving the author's core message and authentic voice. Do not make it generic or corporate.
+Output plain text only: just the rewritten post, ready to publish. No headers, no explanation, no markdown.`;
+  const rewriteResult = await callClaude(rewriteSystem, execInput);
+  document.getElementById('rewriteBody').textContent = rewriteResult;
+  document.getElementById('baAfter').textContent = rewriteResult;
+
+  const hooksSystem = `You are the Hook Ideation Specialist. Based on the original LinkedIn post below, generate 5 alternative scroll-stopping hook options (opening 1-3 lines each), each in a different style (contrarian, story-based, data-driven, question-based, bold-claim).
+Output plain text only, numbered 1-5, one hook per number, no extra commentary, no markdown.`;
+  const hooksResult = await callClaude(hooksSystem, `Original post:\n\n${contentText}`);
+  document.getElementById('hooksBody').textContent = hooksResult;
+
+  const titlesSystem = `You are the Title Optimization Specialist. LinkedIn posts don't have formal titles, but the first line often functions as one when read in-feed. Based on the post below, generate 5 alternative "first line" title options optimized for curiosity and credibility for a tech/AI audience.
+Output plain text only, numbered 1-5, no extra commentary, no markdown.`;
+  const titlesResult = await callClaude(titlesSystem, `Original post:\n\n${contentText}`);
+  document.getElementById('titlesBody').textContent = titlesResult;
+
+  // Publishing checklist
+  log('Generating Publishing Checklist.');
+  const checklistSystem = `You are the Publishing QA Specialist. Based on all reviewer feedback provided, generate a final pre-publish checklist for this LinkedIn post.
+Output plain text only, as a checklist using "[ ]" or "[x]" prefixes, 8-10 concrete items, no markdown headers.`;
+  const checklistResult = await callClaude(checklistSystem, execInput);
+  document.getElementById('checklistBody').textContent = checklistResult;
+
+  // Content Health Report
+  log('Generating Content Health Report.');
+  const healthSystem = `You are the Content Health Auditor. Based on all reviewer feedback, produce a "health report" for this LinkedIn post covering overall content health across Clarity, Credibility, Engagement Potential, Originality, and Risk of being flagged as low-effort/AI-generated by readers.
+Output plain text only in this structure:
+Clarity: X/10 - one line
+Credibility: X/10 - one line
+Engagement Potential: X/10 - one line
+Originality: X/10 - one line
+AI-Generic Risk: Low/Medium/High - one line
+Overall Health: one sentence summary
+Plain text only, no markdown, no JSON.`;
+  const healthResult = await callClaude(healthSystem, execInput);
+  document.getElementById('healthReport').textContent = healthResult;
+
+  // Final Report
+  log('Compiling Final Report.');
+  const finalSystem = `You are the Final Report Generator for a brutally honest content review platform. Combine everything into a short final report a creator can act on immediately.
+Output plain text only, in this structure:
+FINAL VERDICT: one sentence
+PUBLISH READINESS: Ready / Needs Minor Edits / Needs Major Rework
+KEY ACTION ITEMS:
+- ...
+- ...
+- ...
+CLOSING NOTE: one encouraging but honest closing sentence.
+Plain text only, no markdown, no JSON.`;
+  const finalResult = await callClaude(finalSystem, execInput);
+  document.getElementById('finalReport').textContent = finalResult;
+
+  log('Full analysis complete.');
+  btn.classList.remove('loading'); btn.disabled = false;
+}
+</script>
+</body>
+</html>

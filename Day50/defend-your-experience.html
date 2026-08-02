@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defend Your Experience — AI Interview Simulator</title>
+<style>
+  :root{
+    --bg-1:#0b0c1a;
+    --bg-2:#12142b;
+    --purple:#8b5cf6;
+    --purple-2:#a78bfa;
+    --blue:#3b82f6;
+    --blue-2:#60a5fa;
+    --glass:rgba(255,255,255,0.06);
+    --glass-border:rgba(255,255,255,0.12);
+    --text-1:#f4f4fb;
+    --text-2:#b7b9d6;
+    --text-3:#83869e;
+    --green:#34d399;
+    --amber:#fbbf24;
+    --red:#f87171;
+    --radius:18px;
+    --shadow:0 8px 30px rgba(0,0,0,0.35);
+  }
+  html.light{
+    --bg-1:#eef0fb;
+    --bg-2:#ffffff;
+    --glass:rgba(255,255,255,0.7);
+    --glass-border:rgba(20,20,50,0.08);
+    --text-1:#161726;
+    --text-2:#3d3f57;
+    --text-3:#6b6d87;
+    --shadow:0 8px 30px rgba(60,60,120,0.12);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(139,92,246,0.25), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(59,130,246,0.25), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(139,92,246,0.15), transparent 50%),
+      var(--bg-1);
+    color:var(--text-1);
+    min-height:100vh;
+    transition:background .4s ease, color .4s ease;
+    overflow-x:hidden;
+  }
+  a{color:inherit;}
+  ::-webkit-scrollbar{width:10px;}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(var(--purple),var(--blue)); border-radius:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .container{max-width:1400px; margin:0 auto; padding:24px 28px 80px;}
+
+  /* HEADER */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 26px;
+    border-radius:var(--radius);
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(18px);
+    box-shadow:var(--shadow);
+    margin-bottom:26px;
+    animation:fadeDown .6s ease;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-icon{
+    width:42px; height:42px; border-radius:12px;
+    background:linear-gradient(135deg, var(--purple), var(--blue));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:18px; color:white;
+    box-shadow:0 4px 18px rgba(139,92,246,0.5);
+  }
+  .brand h1{font-size:19px; font-weight:700; letter-spacing:.3px;}
+  .brand p{font-size:12px; color:var(--text-3);}
+  .header-actions{display:flex; align-items:center; gap:12px;}
+
+  .btn{
+    border:none; cursor:pointer; font-weight:600; font-size:13.5px;
+    padding:11px 18px; border-radius:12px; transition:all .25s ease;
+    display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--purple), var(--blue));
+    color:white; box-shadow:0 6px 20px rgba(139,92,246,0.4);
+  }
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 26px rgba(139,92,246,0.55);}
+  .btn-ghost{
+    background:var(--glass); color:var(--text-1); border:1px solid var(--glass-border);
+  }
+  .btn-ghost:hover{background:rgba(255,255,255,0.12); transform:translateY(-2px);}
+  .btn-sm{padding:8px 12px; font-size:12.5px;}
+  .btn:disabled{opacity:.5; cursor:not-allowed; transform:none !important;}
+
+  .toggle{
+    width:52px; height:28px; border-radius:20px; background:var(--glass);
+    border:1px solid var(--glass-border); position:relative; cursor:pointer;
+  }
+  .toggle .knob{
+    position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+    background:linear-gradient(135deg, var(--purple), var(--blue));
+    transition:left .3s ease;
+  }
+  html.light .toggle .knob{left:27px;}
+
+  /* GRID LAYOUT */
+  .layout{
+    display:grid;
+    grid-template-columns: 300px 1fr 320px;
+    gap:22px;
+    align-items:start;
+  }
+  @media(max-width:1100px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  .card{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    padding:20px;
+    backdrop-filter:blur(18px);
+    box-shadow:var(--shadow);
+    animation:fadeUp .6s ease;
+    margin-bottom:22px;
+  }
+  .card h2{
+    font-size:14.5px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--text-2); margin-bottom:14px; display:flex; align-items:center; gap:8px;
+  }
+  .card h2 .dot{width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--blue));}
+
+  /* UPLOAD AREA */
+  .dropzone{
+    border:2px dashed var(--glass-border);
+    border-radius:14px; padding:26px 16px; text-align:center;
+    cursor:pointer; transition:all .25s ease; margin-bottom:12px;
+  }
+  .dropzone:hover, .dropzone.dragover{
+    border-color:var(--purple); background:rgba(139,92,246,0.08);
+  }
+  .dropzone .icon{font-size:28px; margin-bottom:8px;}
+  .dropzone p{font-size:12.5px; color:var(--text-3);}
+  .dropzone strong{color:var(--text-1);}
+  #fileInput{display:none;}
+
+  .file-chip{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.3);
+    padding:9px 12px; border-radius:10px; font-size:12.5px; margin-top:10px;
+  }
+
+  /* PROGRESS */
+  .progress-wrap{margin-top:6px;}
+  .progress-track{
+    height:10px; border-radius:8px; background:rgba(255,255,255,0.08);
+    overflow:hidden; margin-top:8px;
+  }
+  html.light .progress-track{background:rgba(20,20,50,0.08);}
+  .progress-fill{
+    height:100%; border-radius:8px;
+    background:linear-gradient(90deg, var(--purple), var(--blue));
+    width:0%; transition:width .6s ease;
+  }
+  .progress-label{display:flex; justify-content:space-between; font-size:12px; color:var(--text-3);}
+
+  .stage-list{list-style:none; margin-top:16px; display:flex; flex-direction:column; gap:10px;}
+  .stage-list li{
+    display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-3);
+    padding:8px 10px; border-radius:10px; transition:all .25s ease;
+  }
+  .stage-list li.active{background:rgba(139,92,246,0.14); color:var(--text-1); font-weight:600;}
+  .stage-list li.done{color:var(--green);}
+  .stage-list .bullet{
+    width:18px; height:18px; border-radius:50%; border:2px solid var(--text-3);
+    display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0;
+  }
+  .stage-list li.active .bullet{border-color:var(--purple); color:var(--purple);}
+  .stage-list li.done .bullet{border-color:var(--green); background:var(--green); color:#06281c;}
+
+  /* CLAIMS PANEL */
+  .claim-item{
+    padding:12px; border-radius:12px; background:rgba(255,255,255,0.04);
+    border:1px solid var(--glass-border); margin-bottom:10px; cursor:pointer;
+    transition:all .2s ease; position:relative;
+  }
+  .claim-item:hover{border-color:var(--purple);}
+  .claim-item.selected{border-color:var(--blue); background:rgba(59,130,246,0.1);}
+  .claim-item .ctitle{font-size:13px; font-weight:600; margin-bottom:4px;}
+  .claim-item .ctag{
+    font-size:10.5px; padding:3px 8px; border-radius:20px; display:inline-block; margin-top:6px;
+    font-weight:700; letter-spacing:.3px;
+  }
+  .tag-strong{background:rgba(52,211,153,0.15); color:var(--green);}
+  .tag-weak{background:rgba(248,113,113,0.15); color:var(--red);}
+  .tag-neutral{background:rgba(251,191,36,0.15); color:var(--amber);}
+
+  /* CHAT / QUESTION PANEL */
+  .chat-window{
+    height:340px; overflow-y:auto; padding-right:6px; margin-bottom:14px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .msg{
+    max-width:88%; padding:13px 16px; border-radius:14px; font-size:13.5px; line-height:1.5;
+    animation:fadeUp .35s ease;
+  }
+  .msg.ai{
+    align-self:flex-start; background:rgba(139,92,246,0.14);
+    border:1px solid rgba(139,92,246,0.25); border-bottom-left-radius:4px;
+  }
+  .msg.user{
+    align-self:flex-end; background:rgba(59,130,246,0.16);
+    border:1px solid rgba(59,130,246,0.3); border-bottom-right-radius:4px;
+  }
+  .msg .tag{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-3); margin-bottom:5px; display:block;}
+
+  textarea{
+    width:100%; resize:vertical; min-height:90px; border-radius:12px;
+    background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);
+    color:var(--text-1); padding:12px 14px; font-size:13.5px; font-family:inherit;
+    outline:none; transition:border .2s ease;
+  }
+  textarea:focus{border-color:var(--purple);}
+  .answer-actions{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+
+  .typing{display:flex; gap:4px; align-items:center; padding:4px 0;}
+  .typing span{
+    width:6px; height:6px; border-radius:50%; background:var(--purple-2);
+    animation:blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2){animation-delay:.2s;}
+  .typing span:nth-child(3){animation-delay:.4s;}
+
+  /* CONFIDENCE METER */
+  .meter-ring{
+    width:120px; height:120px; margin:10px auto; position:relative;
+  }
+  .meter-ring svg{transform:rotate(-90deg);}
+  .meter-ring .bg{fill:none; stroke:rgba(255,255,255,0.08); stroke-width:10;}
+  html.light .meter-ring .bg{stroke:rgba(20,20,50,0.08);}
+  .meter-ring .fg{fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .7s ease, stroke .4s ease;}
+  .meter-num{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+  }
+  .meter-num .val{font-size:24px; font-weight:800;}
+  .meter-num .lbl{font-size:10px; color:var(--text-3); text-transform:uppercase;}
+
+  /* SCORE CARD */
+  .score-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+  .score-box{
+    background:rgba(255,255,255,0.04); border:1px solid var(--glass-border);
+    border-radius:12px; padding:12px; text-align:center;
+  }
+  .score-box .num{font-size:20px; font-weight:800; background:linear-gradient(135deg,var(--purple-2),var(--blue-2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .score-box .lbl{font-size:11px; color:var(--text-3); margin-top:4px;}
+
+  .pill-list{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+  .pill{
+    font-size:12.5px; padding:10px 12px; border-radius:10px;
+    background:rgba(255,255,255,0.04); border:1px solid var(--glass-border);
+    display:flex; gap:8px; align-items:flex-start;
+  }
+  .pill.good::before{content:"✓"; color:var(--green); font-weight:800;}
+  .pill.warn::before{content:"!"; color:var(--amber); font-weight:800;}
+
+  .tip-item{
+    font-size:12.5px; color:var(--text-2); padding:9px 0; border-bottom:1px solid var(--glass-border);
+  }
+  .tip-item:last-child{border-bottom:none;}
+
+  .empty{
+    text-align:center; padding:30px 10px; color:var(--text-3); font-size:13px;
+  }
+
+  /* REPORT MODAL */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(5,5,15,0.7); backdrop-filter:blur(6px);
+    display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .modal-overlay.open{display:flex; animation:fadeIn .25s ease;}
+  .modal{
+    background:var(--bg-2); border:1px solid var(--glass-border); border-radius:20px;
+    max-width:720px; width:100%; max-height:85vh; overflow-y:auto; padding:30px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5); animation:fadeUp .35s ease;
+  }
+  .modal-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+  .modal h2{font-size:20px;}
+  .close-btn{
+    background:none; border:none; color:var(--text-3); font-size:20px; cursor:pointer;
+    width:34px; height:34px; border-radius:50%; transition:all .2s ease;
+  }
+  .close-btn:hover{background:rgba(255,255,255,0.08); color:var(--text-1);}
+
+  .report-section{margin-bottom:20px;}
+  .report-section h3{font-size:13px; text-transform:uppercase; color:var(--purple-2); margin-bottom:10px; letter-spacing:.4px;}
+  .report-row{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--glass-border); font-size:13px;}
+
+  /* TOASTS / LOADING / ERROR */
+  #toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(120%);
+    background:var(--bg-2); border:1px solid var(--glass-border); padding:13px 22px;
+    border-radius:12px; font-size:13px; box-shadow:var(--shadow); z-index:200;
+    transition:transform .35s ease; display:flex; align-items:center; gap:10px;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0);}
+  #toast.error{border-color:rgba(248,113,113,0.4); color:var(--red);}
+  #toast.success{border-color:rgba(52,211,153,0.4); color:var(--green);}
+
+  .spinner{
+    width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.2);
+    border-top-color:var(--purple-2); animation:spin .7s linear infinite;
+  }
+
+  .loading-overlay{
+    position:fixed; inset:0; background:rgba(5,5,15,0.55); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:150; flex-direction:column; gap:14px;
+  }
+  .loading-overlay.show{display:flex;}
+  .loading-overlay .spinner{width:36px; height:36px; border-width:3px;}
+  .loading-overlay p{font-size:13px; color:var(--text-2);}
+
+  @keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes fadeDown{from{opacity:0; transform:translateY(-14px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes blink{0%,80%,100%{opacity:.2; transform:scale(.8);} 40%{opacity:1; transform:scale(1);}}
+
+  .badge-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .badge{font-size:11px; padding:5px 10px; border-radius:20px; background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); color:var(--text-2);}
+
+  footer{text-align:center; color:var(--text-3); font-size:11.5px; margin-top:30px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">DX</div>
+      <div>
+        <h1>Defend Your Experience</h1>
+        <p>Adaptive AI Interview Defense Simulator</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm" id="exportBtn">⬇ Export Report</button>
+      <div class="toggle" id="themeToggle" title="Toggle theme"><div class="knob"></div></div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-col">
+      <div class="card">
+        <h2><span class="dot"></span> Upload Resume</h2>
+        <div class="dropzone" id="dropzone">
+          <div class="icon">📄</div>
+          <p><strong>Drag & drop</strong> your resume here<br>or click to browse</p>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt">
+        <div id="fileChipArea"></div>
+        <button class="btn btn-primary" id="sampleBtn" style="width:100%; margin-top:10px; justify-content:center;">✨ Use Sample Resume</button>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span> Session Progress</h2>
+        <div class="progress-wrap">
+          <div class="progress-label"><span id="progressLabel">0 / 6 questions</span><span id="progressPct">0%</span></div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+        <ul class="stage-list" id="stageList">
+          <li class="active" data-stage="0"><span class="bullet">1</span> Resume Analysis</li>
+          <li data-stage="1"><span class="bullet">2</span> Claim Extraction</li>
+          <li data-stage="2"><span class="bullet">3</span> Adaptive Q&A</li>
+          <li data-stage="3"><span class="bullet">4</span> Weak Claim Probing</li>
+          <li data-stage="4"><span class="bullet">5</span> Scoring</li>
+          <li data-stage="5"><span class="bullet">6</span> Defense Report</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span> Communication Tips</h2>
+        <div id="tipsArea">
+          <div class="tip-item">💡 Use the STAR method: Situation, Task, Action, Result.</div>
+          <div class="tip-item">💡 Quantify impact wherever possible (%, time saved, users).</div>
+          <div class="tip-item">💡 Avoid vague verbs like "helped" or "worked on" — be specific.</div>
+          <div class="tip-item">💡 Keep answers under 90 seconds; lead with the result.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN -->
+    <div class="center-col">
+      <div class="card">
+        <h2><span class="dot"></span> Experience Claims Panel</h2>
+        <div id="claimsPanel">
+          <div class="empty">Upload or load a resume to extract claims.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span> Adaptive Interview — AI Dashboard</h2>
+        <div class="chat-window" id="chatWindow">
+          <div class="empty">Your interview conversation will appear here once a session starts.</div>
+        </div>
+        <textarea id="answerInput" placeholder="Type your answer here... (use STAR: Situation, Task, Action, Result)" disabled></textarea>
+        <div class="answer-actions">
+          <button class="btn btn-primary" id="submitAnswer" disabled>Submit Answer</button>
+          <button class="btn btn-ghost btn-sm" id="starHelperBtn" disabled>⭐ STAR Helper</button>
+          <button class="btn btn-ghost btn-sm" id="followUpBtn" disabled>🔁 Generate Follow-up</button>
+          <button class="btn btn-ghost btn-sm" id="skipBtn" disabled>Skip →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+      <div class="card">
+        <h2><span class="dot"></span> Confidence Meter</h2>
+        <div class="meter-ring">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            <circle class="bg" cx="60" cy="60" r="50"></circle>
+            <circle class="fg" id="meterFg" cx="60" cy="60" r="50" stroke="#8b5cf6"
+              stroke-dasharray="314" stroke-dashoffset="314"></circle>
+          </svg>
+          <div class="meter-num"><span class="val" id="meterVal">0%</span><span class="lbl">Confidence</span></div>
+        </div>
+        <div class="badge-row" id="meterBadges"></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span> Weak Claims Detector</h2>
+        <div id="weakClaimsArea">
+          <div class="empty">No claims analyzed yet.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="dot"></span> Interview Score</h2>
+        <div class="score-grid" id="scoreGrid">
+          <div class="score-box"><div class="num" id="scoreOverall">--</div><div class="lbl">Overall</div></div>
+          <div class="score-box"><div class="num" id="scoreClarity">--</div><div class="lbl">Clarity</div></div>
+          <div class="score-box"><div class="num" id="scoreDepth">--</div><div class="lbl">Depth</div></div>
+          <div class="score-box"><div class="num" id="scoreCred">--</div><div class="lbl">Credibility</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Defend Your Experience — Runs entirely offline in your browser. No data leaves your device.</footer>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📋 Defense Report</h2>
+      <button class="close-btn" id="closeModal">✕</button>
+    </div>
+    <div id="reportContent"></div>
+    <button class="btn btn-primary" id="downloadReportBtn" style="width:100%; margin-top:10px; justify-content:center;">⬇ Download as .txt</button>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p id="loadingText">Analyzing resume...</p>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============ STATE ============ */
+  const state = {
+    resumeLoaded:false,
+    claims:[],
+    currentClaimIndex:0,
+    questionsAsked:0,
+    totalQuestions:6,
+    confidence:55,
+    answers:[],
+    stage:0,
+    strengths:[],
+    improvements:[],
+    scores:{overall:0, clarity:0, depth:0, credibility:0},
+    weakClaims:[],
+    sessionComplete:false
+  };
+
+  const STORAGE_KEY = 'dye_session_v1';
+
+  /* ============ SAMPLE RESUME DATA ============ */
+  const sampleResume = {
+    name:"Aarav Sharma",
+    role:"B.Tech IT Student — Final Year",
+    claims:[
+      {
+        id:1,
+        title:"Built a real-time chat app using MERN stack serving 500+ users",
+        category:"Project",
+        strength:"weak",
+        detail:"Claims 500+ users but no deployment/analytics evidence mentioned.",
+        followUps:[
+          "How did you measure that 500+ users actually used the app? What analytics tool did you use?",
+          "Walk me through how you handled WebSocket scaling for concurrent users.",
+          "What was your server's response time under peak load, and how did you test it?"
+        ]
+      },
+      {
+        id:2,
+        title:"Improved API response time by 40% through query optimization",
+        category:"Internship",
+        strength:"strong",
+        detail:"Specific, quantified, and technically verifiable claim.",
+        followUps:[
+          "Which specific queries did you optimize, and what indexing strategy did you use?",
+          "How did you benchmark the before/after response times?",
+          "What tools did you use to profile the slow queries?"
+        ]
+      },
+      {
+        id:3,
+        title:"Led a team of 4 in a hackathon and won 2nd place among 60 teams",
+        category:"Leadership",
+        strength:"strong",
+        detail:"Verifiable, specific team size and ranking.",
+        followUps:[
+          "What was the biggest technical disagreement in your team, and how did you resolve it?",
+          "Describe a moment you had to redistribute tasks under time pressure.",
+          "What would you do differently if you led that team again?"
+        ]
+      },
+      {
+        id:4,
+        title:"Worked on machine learning model for sentiment analysis",
+        category:"Coursework",
+        strength:"weak",
+        detail:"Vague verb 'worked on' — no metrics, dataset size, or accuracy mentioned.",
+        followUps:[
+          "What accuracy/F1 score did your model achieve, and on what dataset?",
+          "Which algorithm did you use and why did you choose it over alternatives?",
+          "How did you handle class imbalance or overfitting, if at all?"
+        ]
+      },
+      {
+        id:5,
+        title:"Deployed a full-stack app on AWS using EC2 and S3",
+        category:"Project",
+        strength:"neutral",
+        detail:"Good technical claim but missing cost/traffic/CI-CD context.",
+        followUps:[
+          "Walk me through your deployment pipeline — was it manual or automated (CI/CD)?",
+          "How did you secure your EC2 instance and manage environment variables?",
+          "What was your monthly AWS cost, and how did you optimize it?"
+        ]
+      },
+      {
+        id:6,
+        title:"Contributed to an open-source repository with 200+ GitHub stars",
+        category:"Open Source",
+        strength:"strong",
+        detail:"Specific and verifiable via GitHub profile.",
+        followUps:[
+          "What exactly did your merged PRs change in the codebase?",
+          "How did you handle code review feedback from maintainers?",
+          "What was the most challenging bug you fixed in that repo?"
+        ]
+      }
+    ]
+  };
+
+  /* ============ UTILITIES ============ */
+  function $(sel){return document.querySelector(sel);}
+  function $all(sel){return document.querySelectorAll(sel);}
+
+  function showToast(msg, type){
+    const t = $('#toast');
+    t.textContent = msg;
+    t.className = 'show' + (type ? ' '+type : '');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(()=>{ t.className = t.className.replace('show',''); }, 2800);
+  }
+
+  function showLoading(text){
+    $('#loadingText').textContent = text || 'Working...';
+    $('#loadingOverlay').classList.add('show');
+  }
+  function hideLoading(){
+    $('#loadingOverlay').classList.remove('show');
+  }
+
+  function delay(ms){ return new Promise(res=>setTimeout(res, ms)); }
+
+  function saveSession(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){ /* ignore quota errors silently */ }
+  }
+  function loadSession(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){ return null; }
+    return null;
+  }
+
+  /* ============ THEME TOGGLE ============ */
+  $('#themeToggle').addEventListener('click', ()=>{
+    document.documentElement.classList.toggle('light');
+    localStorage.setItem('dye_theme', document.documentElement.classList.contains('light') ? 'light':'dark');
+  });
+  if(localStorage.getItem('dye_theme') === 'light'){
+    document.documentElement.classList.add('light');
+  }
+
+  /* ============ FILE UPLOAD (drag & drop) ============ */
+  const dropzone = $('#dropzone');
+  const fileInput = $('#fileInput');
+
+  dropzone.addEventListener('click', ()=> fileInput.click());
+  dropzone.addEventListener('dragover', e=>{ e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', ()=> dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e=>{
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if(e.dataTransfer.files.length){
+      handleFile(e.dataTransfer.files[0]);
+    }
+  });
+  fileInput.addEventListener('change', e=>{
+    if(e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file){
+    const allowed = ['pdf','doc','docx','txt'];
+    const ext = file.name.split('.').pop().toLowerCase();
+    if(!allowed.includes(ext)){
+      showToast('Unsupported file type. Please upload PDF, DOC, DOCX or TXT.', 'error');
+      return;
+    }
+    $('#fileChipArea').innerHTML = `
+      <div class="file-chip">
+        <span>📎 ${escapeHtml(file.name)}</span>
+        <span style="color:var(--green); font-weight:700;">✓ Ready</span>
+      </div>`;
+    showToast('Resume uploaded. Since real parsing needs an AI backend, loading the built-in sample analysis for a full offline demo.', 'success');
+    startAnalysis();
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  $('#sampleBtn').addEventListener('click', ()=>{
+    $('#fileChipArea').innerHTML = `
+      <div class="file-chip">
+        <span>📎 Aarav_Sharma_Resume.pdf (sample)</span>
+        <span style="color:var(--green); font-weight:700;">✓ Ready</span>
+      </div>`;
+    startAnalysis();
+  });
+
+  /* ============ ANALYSIS FLOW ============ */
+  async function startAnalysis(){
+    resetState();
+    showLoading('Analyzing resume structure...');
+    setStage(0);
+    await delay(900);
+
+    showLoading('Extracting experience claims...');
+    setStage(1);
+    await delay(1000);
+
+    state.claims = JSON.parse(JSON.stringify(sampleResume.claims));
+    state.resumeLoaded = true;
+    renderClaims();
+    renderWeakClaims();
+
+    hideLoading();
+    showToast('Resume analyzed. 6 experience claims extracted.', 'success');
+
+    await delay(400);
+    setStage(2);
+    beginInterview();
+  }
+
+  function resetState(){
+    state.claims = [];
+    state.currentClaimIndex = 0;
+    state.questionsAsked = 0;
+    state.confidence = 55;
+    state.answers = [];
+    state.stage = 0;
+    state.strengths = [];
+    state.improvements = [];
+    state.scores = {overall:0, clarity:0, depth:0, credibility:0};
+    state.weakClaims = [];
+    state.sessionComplete = false;
+    $('#chatWindow').innerHTML = '';
+    $('#reportContent').innerHTML = '';
+    updateProgress();
+    updateMeter(55);
+    updateScoreBoxes();
+  }
+
+  function setStage(i){
+    state.stage = i;
+    $all('#stageList li').forEach((li, idx)=>{
+      li.classList.remove('active','done');
+      if(idx < i) li.classList.add('done');
+      else if(idx === i) li.classList.add('active');
+    });
+  }
+
+  /* ============ RENDER CLAIMS ============ */
+  function renderClaims(){
+    const panel = $('#claimsPanel');
+    if(!state.claims.length){
+      panel.innerHTML = '<div class="empty">Upload or load a resume to extract claims.</div>';
+      return;
+    }
+    panel.innerHTML = state.claims.map((c, idx)=>{
+      const tagClass = c.strength === 'strong' ? 'tag-strong' : c.strength === 'weak' ? 'tag-weak' : 'tag-neutral';
+      const tagLabel = c.strength === 'strong' ? '✓ Strong Claim' : c.strength === 'weak' ? '⚠ Needs Defense' : '● Neutral';
+      return `
+        <div class="claim-item ${idx===state.currentClaimIndex ? 'selected':''}" data-idx="${idx}">
+          <div class="ctitle">${escapeHtml(c.title)}</div>
+          <div style="font-size:11.5px; color:var(--text-3);">${escapeHtml(c.category)}</div>
+          <span class="ctag ${tagClass}">${tagLabel}</span>
+        </div>`;
+    }).join('');
+
+    $all('.claim-item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const idx = parseInt(el.getAttribute('data-idx'));
+        highlightClaim(idx);
+      });
+    });
+  }
+
+  function highlightClaim(idx){
+    state.currentClaimIndex = idx;
+    $all('.claim-item').forEach(el=> el.classList.remove('selected'));
+    const el = document.querySelector(`.claim-item[data-idx="${idx}"]`);
+    if(el) el.classList.add('selected');
+  }
+
+  function renderWeakClaims(){
+    const area = $('#weakClaimsArea');
+    const weak = state.claims.filter(c=> c.strength === 'weak');
+    state.weakClaims = weak;
+    if(!weak.length){
+      area.innerHTML = '<div class="empty">No weak claims detected.</div>';
+      return;
+    }
+    area.innerHTML = weak.map(c=>`
+      <div class="pill warn">
+        <div>
+          <strong>${escapeHtml(c.title)}</strong>
+          <div style="color:var(--text-3); margin-top:4px;">${escapeHtml(c.detail)}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  /* ============ CHAT / INTERVIEW ENGINE ============ */
+  function addMessage(text, sender, tag){
+    const win = $('#chatWindow');
+    if(win.querySelector('.empty')) win.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'msg ' + sender;
+    div.innerHTML = (tag ? `<span class="tag">${tag}</span>` : '') + escapeHtml(text);
+    win.appendChild(div);
+    win.scrollTop = win.scrollHeight;
+    return div;
+  }
+
+  function addTypingIndicator(){
+    const win = $('#chatWindow');
+    const div = document.createElement('div');
+    div.className = 'msg ai typing-msg';
+    div.innerHTML = `<span class="tag">AI Interviewer</span><div class="typing"><span></span><span></span><span></span></div>`;
+    win.appendChild(div);
+    win.scrollTop = win.scrollHeight;
+    return div;
+  }
+
+  function baseQuestionFor(claim){
+    return `Tell me more about this: "${claim.title}". Can you walk me through it in detail?`;
+  }
+
+  async function beginInterview(){
+    $('#answerInput').disabled = false;
+    $('#submitAnswer').disabled = false;
+    $('#starHelperBtn').disabled = false;
+    $('#followUpBtn').disabled = false;
+    $('#skipBtn').disabled = false;
+
+    const typing = addTypingIndicator();
+    await delay(800);
+    typing.remove();
+
+    addMessage("Hi! I'm your AI interviewer. I've reviewed your resume and identified 6 key experience claims. I'll ask adaptive questions — the deeper and more specific your answers, the higher your defense score. Let's begin.", 'ai', 'AI Interviewer');
+    await delay(400);
+    askNextQuestion();
+    saveSession();
+  }
+
+  function askNextQuestion(){
+    if(state.questionsAsked >= state.totalQuestions){
+      finishInterview();
+      return;
+    }
+    const claim = state.claims[state.currentClaimIndex % state.claims.length];
+    highlightClaim(state.currentClaimIndex % state.claims.length);
+    const q = baseQuestionFor(claim);
+    addMessage(q, 'ai', `Question ${state.questionsAsked+1} of ${state.totalQuestions} · ${claim.category}`);
+    $('#answerInput').focus();
+  }
+
+  $('#submitAnswer').addEventListener('click', submitAnswer);
+  $('#answerInput').addEventListener('keydown', e=>{
+    if(e.key === 'Enter' && e.ctrlKey){ submitAnswer(); }
+  });
+
+  async function submitAnswer(){
+    const input = $('#answerInput');
+    const text = input.value.trim();
+    if(!text){
+      showToast('Please type an answer before submitting.', 'error');
+      return;
+    }
+    addMessage(text, 'user', 'You');
+    input.value = '';
+    $('#submitAnswer').disabled = true;
+
+    const claim = state.claims[state.currentClaimIndex % state.claims.length];
+    const analysis = analyzeAnswer(text, claim);
+    state.answers.push({claimId:claim.id, text, analysis});
+
+    updateMeter(analysis.confidenceDelta);
+    updateStrengthsAndImprovements(analysis, claim);
+
+    const typing = addTypingIndicator();
+    await delay(900);
+    typing.remove();
+
+    addMessage(analysis.feedback, 'ai', 'AI Feedback');
+
+    if(analysis.triggersFollowUp){
+      await delay(500);
+      const typing2 = addTypingIndicator();
+      await delay(800);
+      typing2.remove();
+      const followUp = pickFollowUp(claim);
+      addMessage(followUp, 'ai', 'Adaptive Follow-up');
+    }
+
+    state.questionsAsked++;
+    state.currentClaimIndex++;
+    updateProgress();
+    saveSession();
+
+    $('#submitAnswer').disabled = false;
+    await delay(600);
+    askNextQuestion();
+  }
+
+  $('#skipBtn').addEventListener('click', ()=>{
+    addMessage('(Skipped this question)', 'user', 'You');
+    state.confidence = Math.max(15, state.confidence - 8);
+    updateMeter(-8);
+    state.improvements.push('Skipped a question on: ' + state.claims[state.currentClaimIndex % state.claims.length].title);
+    state.questionsAsked++;
+    state.currentClaimIndex++;
+    updateProgress();
+    saveSession();
+    askNextQuestion();
+  });
+
+  function analyzeAnswer(text, claim){
+    const words = text.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+    const hasNumbers = /\d/.test(text);
+    const starWords = ['situation','task','action','result','because','so that','achieved','result was','led to'];
+    const starScore = starWords.filter(w=> text.toLowerCase().includes(w)).length;
+    const vague = ['helped', 'worked on', 'stuff', 'things', 'somehow', 'basically'];
+    const vagueHits = vague.filter(v=> text.toLowerCase().includes(v)).length;
+
+    let confidenceDelta = 0;
+    let feedback = '';
+    let triggersFollowUp = false;
+
+    if(wordCount < 12){
+      confidenceDelta = -10;
+      feedback = "That's a fairly brief answer. Try expanding with specifics — what exactly did you do, and what was the measurable outcome?";
+      triggersFollowUp = true;
+    } else if(claim.strength === 'weak' && !hasNumbers){
+      confidenceDelta = -6;
+      feedback = "I notice this claim lacks quantifiable evidence. Interviewers often probe deeper here — let's dig into specifics.";
+      triggersFollowUp = true;
+    } else if(hasNumbers && starScore > 0){
+      confidenceDelta = 12;
+      feedback = "Strong answer — you backed your claim with structure and metrics. This is exactly the kind of specificity recruiters look for.";
+      triggersFollowUp = Math.random() > 0.5;
+    } else if(hasNumbers){
+      confidenceDelta = 7;
+      feedback = "Good, you included quantifiable detail. Consider framing it more explicitly using the STAR method for maximum clarity.";
+      triggersFollowUp = Math.random() > 0.6;
+    } else if(vagueHits > 0){
+      confidenceDelta = -8;
+      feedback = "I noticed some vague phrasing. Try replacing generic verbs with specific actions and outcomes.";
+      triggersFollowUp = true;
+    } else {
+      confidenceDelta = 3;
+      feedback = "Decent answer. Adding a measurable result would make this claim significantly more defensible.";
+      triggersFollowUp = Math.random() > 0.5;
+    }
+
+    return {
+      wordCount, hasNumbers, starScore, vagueHits,
+      confidenceDelta, feedback, triggersFollowUp,
+      quality: confidenceDelta >= 8 ? 'strong' : confidenceDelta <= -6 ? 'weak' : 'moderate'
+    };
+  }
+
+  function pickFollowUp(claim){
+    if(!claim._fuIndex) claim._fuIndex = 0;
+    const fu = claim.followUps[claim._fuIndex % claim.followUps.length];
+    claim._fuIndex++;
+    return fu;
+  }
+
+  $('#followUpBtn').addEventListener('click', async ()=>{
+    const claim = state.claims[state.currentClaimIndex % state.claims.length];
+    const typing = addTypingIndicator();
+    await delay(600);
+    typing.remove();
+    addMessage(pickFollowUp(claim), 'ai', 'Manual Follow-up Request');
+  });
+
+  $('#starHelperBtn').addEventListener('click', ()=>{
+    const claim = state.claims[state.currentClaimIndex % state.claims.length];
+    const template =
+`Situation: Describe the context around "${claim.title}".
+Task: What was your specific responsibility?
+Action: What exact steps/technologies did you use?
+Result: What measurable outcome did it produce (%, time, users, revenue)?`;
+    $('#answerInput').value = template;
+    $('#answerInput').focus();
+    showToast('STAR template inserted — fill in your specifics!', 'success');
+  });
+
+  function updateStrengthsAndImprovements(analysis, claim){
+    if(analysis.quality === 'strong'){
+      const s = `Clear, quantified defense of "${claim.title}"`;
+      if(!state.strengths.includes(s)) state.strengths.push(s);
+    } else if(analysis.quality === 'weak'){
+      const imp = `Add measurable evidence when discussing "${claim.title}"`;
+      if(!state.improvements.includes(imp)) state.improvements.push(imp);
+    }
+  }
+
+  /* ============ PROGRESS / METER / SCORE ============ */
+  function updateProgress(){
+    const pct = Math.min(100, Math.round((state.questionsAsked / state.totalQuestions) * 100));
+    $('#progressFill').style.width = pct + '%';
+    $('#progressLabel').textContent = `${state.questionsAsked} / ${state.totalQuestions} questions`;
+    $('#progressPct').textContent = pct + '%';
+  }
+
+  function updateMeter(delta){
+    state.confidence = Math.max(5, Math.min(98, state.confidence + delta));
+    const val = Math.round(state.confidence);
+    const circumference = 314;
+    const offset = circumference - (val/100)*circumference;
+    const fg = $('#meterFg');
+    fg.style.strokeDashoffset = offset;
+    let color = '#f87171';
+    if(val >= 75) color = '#34d399';
+    else if(val >= 45) color = '#fbbf24';
+    fg.setAttribute('stroke', color);
+    $('#meterVal').textContent = val + '%';
+
+    const badges = $('#meterBadges');
+    badges.innerHTML = '';
+    if(val >= 75) badges.innerHTML = '<span class="badge" style="color:var(--green);">Interview-ready</span>';
+    else if(val >= 45) badges.innerHTML = '<span class="badge" style="color:var(--amber);">Needs polish</span>';
+    else badges.innerHTML = '<span class="badge" style="color:var(--red);">High risk area</span>';
+  }
+
+  function computeScores(){
+    const answered = state.answers;
+    if(!answered.length){
+      return {overall:0, clarity:0, depth:0, credibility:0};
+    }
+    let clarityTotal=0, depthTotal=0, credTotal=0;
+    answered.forEach(a=>{
+      clarityTotal += Math.min(100, 40 + a.analysis.wordCount*1.5 + a.analysis.starScore*8 - a.analysis.vagueHits*10);
+      depthTotal += Math.min(100, 35 + a.analysis.starScore*15 + (a.analysis.hasNumbers?20:0));
+      credTotal += Math.min(100, 45 + (a.analysis.hasNumbers?25:0) + (a.analysis.quality==='strong'?20:a.analysis.quality==='weak'?-15:5));
+    });
+    const clarity = Math.max(0, Math.round(clarityTotal/answered.length));
+    const depth = Math.max(0, Math.round(depthTotal/answered.length));
+    const credibility = Math.max(0, Math.round(credTotal/answered.length));
+    const overall = Math.round((clarity + depth + credibility + state.confidence) / 4);
+    return {overall, clarity, depth, credibility};
+  }
+
+  function updateScoreBoxes(){
+    $('#scoreOverall').textContent = state.scores.overall || '--';
+    $('#scoreClarity').textContent = state.scores.clarity || '--';
+    $('#scoreDepth').textContent = state.scores.depth || '--';
+    $('#scoreCred').textContent = state.scores.credibility || '--';
+  }
+
+  /* ============ FINISH INTERVIEW / REPORT ============ */
+  async function finishInterview(){
+    setStage(4);
+    $('#answerInput').disabled = true;
+    $('#submitAnswer').disabled = true;
+    $('#starHelperBtn').disabled = true;
+    $('#followUpBtn').disabled = true;
+    $('#skipBtn').disabled = true;
+
+    const typing = addTypingIndicator();
+    await delay(1000);
+    typing.remove();
+    addMessage("That completes the adaptive interview session. Compiling your Defense Report now...", 'ai', 'AI Interviewer');
+
+    showLoading('Scoring your responses...');
+    await delay(1200);
+    state.scores = computeScores();
+    updateScoreBoxes();
+    hideLoading();
+
+    setStage(5);
+    state.sessionComplete = true;
+    saveSession();
+
+    if(!state.strengths.length){
+      state.strengths.push('Completed the full adaptive interview session');
+    }
+    if(!state.improvements.length){
+      state.improvements.push('Continue practicing quantified STAR-format answers');
+    }
+
+    showToast('Defense Report ready! Click Export to view.', 'success');
+    await delay(600);
+    openReport();
+  }
+
+  function buildReportHTML(){
+    const s = state.scores;
+    const weakTitles = state.weakClaims.map(c=>c.title);
+    return `
+      <div class="report-section">
+        <h3>Overview</h3>
+        <div class="report-row"><span>Candidate</span><span>${escapeHtml(sampleResume.name)}</span></div>
+        <div class="report-row"><span>Role Target</span><span>${escapeHtml(sampleResume.role)}</span></div>
+        <div class="report-row"><span>Questions Answered</span><span>${state.questionsAsked} / ${state.totalQuestions}</span></div>
+        <div class="report-row"><span>Final Confidence</span><span>${Math.round(state.confidence)}%</span></div>
+      </div>
+      <div class="report-section">
+        <h3>Scores</h3>
+        <div class="report-row"><span>Overall Score</span><span><strong>${s.overall}/100</strong></span></div>
+        <div class="report-row"><span>Clarity</span><span>${s.clarity}/100</span></div>
+        <div class="report-row"><span>Depth</span><span>${s.depth}/100</span></div>
+        <div class="report-row"><span>Credibility</span><span>${s.credibility}/100</span></div>
+      </div>
+      <div class="report-section">
+        <h3>Key Strengths</h3>
+        <div class="pill-list">
+          ${state.strengths.map(s=>`<div class="pill good">${escapeHtml(s)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="report-section">
+        <h3>Areas for Improvement</h3>
+        <div class="pill-list">
+          ${state.improvements.map(i=>`<div class="pill warn">${escapeHtml(i)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="report-section">
+        <h3>Weak Claims Flagged</h3>
+        <div class="pill-list">
+          ${weakTitles.length ? weakTitles.map(t=>`<div class="pill warn">${escapeHtml(t)}</div>`).join('') : '<div class="empty">None flagged.</div>'}
+        </div>
+      </div>
+    `;
+  }
+
+  function openReport(){
+    $('#reportContent').innerHTML = buildReportHTML();
+    $('#reportModal').classList.add('open');
+  }
+  $('#closeModal').addEventListener('click', ()=> $('#reportModal').classList.remove('open'));
+  $('#reportModal').addEventListener('click', e=>{
+    if(e.target.id === 'reportModal') $('#reportModal').classList.remove('open');
+  });
+
+  $('#exportBtn').addEventListener('click', ()=>{
+    if(!state.sessionComplete){
+      showToast('Complete the interview session first to generate a report.', 'error');
+      return;
+    }
+    openReport();
+  });
+
+  $('#downloadReportBtn').addEventListener('click', ()=>{
+    const s = state.scores;
+    const lines = [
+      'DEFEND YOUR EXPERIENCE — DEFENSE REPORT',
+      '========================================',
+      `Candidate: ${sampleResume.name}`,
+      `Role Target: ${sampleResume.role}`,
+      `Questions Answered: ${state.questionsAsked} / ${state.totalQuestions}`,
+      `Final Confidence: ${Math.round(state.confidence)}%`,
+      '',
+      'SCORES',
+      `Overall: ${s.overall}/100`,
+      `Clarity: ${s.clarity}/100`,
+      `Depth: ${s.depth}/100`,
+      `Credibility: ${s.credibility}/100`,
+      '',
+      'KEY STRENGTHS',
+      ...state.strengths.map(s=>'- '+s),
+      '',
+      'AREAS FOR IMPROVEMENT',
+      ...state.improvements.map(i=>'- '+i),
+      '',
+      'WEAK CLAIMS FLAGGED',
+      ...(state.weakClaims.length ? state.weakClaims.map(c=>'- '+c.title) : ['None flagged.'])
+    ];
+    const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'defense_report.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Report downloaded.', 'success');
+  });
+
+  /* ============ INIT: restore session if present ============ */
+  (function init(){
+    updateProgress();
+    updateMeter(0);
+    updateScoreBoxes();
+    // Note: we intentionally start fresh each load for a clean demo,
+    // but localStorage support is fully wired via saveSession()/loadSession().
+  })();
+
+})();
+</script>
+</body>
+</html>
